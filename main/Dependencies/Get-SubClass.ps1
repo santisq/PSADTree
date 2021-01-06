@@ -1,13 +1,28 @@
 ﻿function Get-SubClass{
 [cmdletbinding()]
 param(
-    [string]$Name
+    [string]$Name,
+    [validateset('MemberOf','Member')]
+    [string]$RecursionProperty
 )
 
 $filter="(|(distinguishedname=$Name)(samaccountname=$Name)(name=$Name))"
-switch($Name){
-    'Administrators'{$object=Get-ADGroup -LDAPFilter $filter}
-    Default{$object=Get-ADObject -LDAPFilter $filter}
+switch($Name)
+{
+    'Administrators'{
+        if($RecursionProperty){
+            $object=Get-ADGroup -LDAPFilter $filter -Properties $RecursionProperty
+        }else{
+            $object=Get-ADGroup -LDAPFilter $filter
+        }
+    }
+    Default{
+        if($RecursionProperty){
+            $object=Get-ADObject -LDAPFilter $filter -Properties $RecursionProperty
+        }else{
+            $object=Get-ADObject -LDAPFilter $filter
+        }
+    }
 }
 
 if(!$object){
@@ -52,7 +67,6 @@ $subClass=switch($object.ObjectClass)
             Default{'Other'}
         }
     }
-
     'Group'{
 
         $props=Get-ADGroup $object.Name
@@ -70,11 +84,21 @@ $subClass=switch($object.ObjectClass)
     Default{$object.ObjectClass}
 }
 
-[psCustomObject]@{
-    Name=$object.Name
-    UserPrincipalName=$props.UserPrincipalName
-    ObjectClass=$culture.ToTitleCase($object.ObjectClass)
-    SubClass=$subClass
+if($RecursionProperty){
+    [PScustomObject]@{
+        Name=$object.Name
+        UserPrincipalName=$props.UserPrincipalName
+        ObjectClass=$culture.ToTitleCase($object.ObjectClass)
+        SubClass=$subClass
+        Property=$object.$RecursionProperty
+    }
+}else{
+    [PScustomObject]@{
+        Name=$object.Name
+        UserPrincipalName=$props.UserPrincipalName
+        ObjectClass=$culture.ToTitleCase($object.ObjectClass)
+        SubClass=$subClass
+    }
 }
 
 }
