@@ -26,7 +26,7 @@ switch($Name)
 }
 
 if(!$object){
-    $eMessage="Cannot find an object with identity: '{0}' under: '{1}'." -f $Name,$((Get-ADDomain).DistinguishedName)
+    $eMessage="Cannot find an object with identity: '{0}' under: '{1}'." -f $Name,$((Get-ADRootDSE).defaultNamingContext)
     throw $eMessage
 }
 if($object.count -gt 1){
