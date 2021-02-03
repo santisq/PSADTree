@@ -69,7 +69,7 @@ $subClass=switch($object.ObjectClass)
     }
     'Group'{
 
-        $props=Get-ADGroup $object.Name
+        $props=Get-ADGroup $object.distinguishedName
         switch($props.GroupCategory)
         {
             'Distribution'{'Distribution List'}
@@ -78,7 +78,7 @@ $subClass=switch($object.ObjectClass)
         }
     }
     'Computer'{
-        (Get-ADComputer $object.Name -Properties OperatingSystem).OperatingSystem
+        (Get-ADComputer $object.distinguishedName -Properties OperatingSystem).OperatingSystem
     }
     'msDS-GroupManagedServiceAccount'{'gMSA Account'}
     Default{$object.ObjectClass}
