@@ -1,7 +1,8 @@
 # Get-Hierarchy
 
     .SYNOPSIS
-    Gets group membership or parentship and draws it's hierarchy.
+    Gets group's and user's membership or parentship and draws it's hierarchy.
+    Helps you identifying 'Circular Nested Groups'.
     
     .PARAMETER Name
     Objects of class User or Group.
@@ -36,3 +37,6 @@
     .NOTES
     Author: Santiago Squarzon.
  
+![Alt text](/Examples/1.png?raw=true)
+![Alt text](/Examples/2.png?raw=true)
+![Alt text](/Examples/3.png?raw=true)
