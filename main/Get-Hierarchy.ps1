@@ -20,6 +20,9 @@
 
     .EXAMPLE
     C:\PS> gh ExampleGroup -RecursionProperty MemberOf
+    
+    .EXAMPLE
+    C:\PS> Get-ADUser ExampleUser | Get-Hierarchy -RecursionProperty MemberOf
 
     .EXAMPLE           
     C:\PS> Get-ADGroup ExampleGroup | Get-Hierarchy -RecursionProperty MemberOf

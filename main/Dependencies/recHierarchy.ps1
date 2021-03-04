@@ -15,12 +15,12 @@ Error Message: $_
 `n"
 }
 
-$thisObject=Get-SubClass -Name $Name -RecursionProperty $RecursionProperty
+$thisObject=shouldProcess -Name $Name -RecursionProperty $RecursionProperty
 
 $Hierarchy=$(
     ForEach($object in $thisObject.Property)
     {
-        try{Get-SubClass -Name $object}
+        try{shouldProcess -Name $object}
         catch{Write-Warning $(&$errorMessage)}
     }
 )|Sort -Descending ObjectClass
@@ -33,7 +33,6 @@ $script:Index.Add(
             )
         Index=$thisObject.Name
         Class=$txtInfo.ToTitleCase($thisObject.ObjectClass)
-        SubClass=$thisObject.SubClass
         Recursion=$Recursion
         Hierarchy=Indent -String $thisObject.Name -Indent $Recursion
     }) > $null
@@ -66,7 +65,6 @@ if($object.Name -in $Index.Index){
                 )
                 Index=$object.Name
                 Class=$txtInfo.ToTitleCase($object.ObjectClass)
-                SubClass=$object.SubClass
                 Recursion=$Recursion
                 Hierarchy=Indent -String $string -Indent $Recursion
         }) > $null
@@ -87,7 +85,6 @@ if($object.Name -in $Index.Index){
                 )
                 Index=$object.Name
                 Class=$txtInfo.ToTitleCase($object.ObjectClass)
-                SubClass=$object.SubClass
                 Recursion=$Recursion
                 Hierarchy=Indent -String $string -Indent $Recursion
         }) > $null
