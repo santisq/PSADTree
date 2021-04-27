@@ -1,42 +1,39 @@
 # Get-Hierarchy
 
-    .SYNOPSIS
-    Gets group's and user's membership or parentship and draws it's hierarchy.
-    Helps you identifying 'Circular Nested Groups'.
+### DESCRIPTION
+Gets Group's and User's membership or Group parentship and draws it's hierarchy.
+Helps identifying 'Circular Nested Groups'.
     
-    .PARAMETER Name
-    Objects of class User or Group.
+### PARAMETER
+`<Name>` // Objects of class User or Group.
 
-    .OUTPUTS
-    Object[] // System.Array. Returns with properties:
-        - InputParameter: The input user or group.
-        - Index: The object on each level of recursion.
-        - Recursion: The level of recursion or nesting.
-        - Class: The objectClass.
-        - SubClass: The subClass of the group (DistributionList or SecurityGroup) or user (EID, AppID, etc).
-        - Hierarchy: The hierarchy map of the input paremeter.
+### OUTPUTS
+`<Object[]> // System.Array`
 
-    .EXAMPLE
-    C:\PS> Get-Hierarchy ExampleGroup
+<ul>
+Returns with properties:
+    <li> InputParameter: The input user or group </li>
+    <li> Index: The object on each level of recursion </li>
+    <li> Recursion: The level of recursion or nesting </li>
+    <li> Class: The objectClass </li>
+    <li> Hierarchy: The hierarchy map of the input paremeter </li>
+</ul>
 
-    .EXAMPLE
-    C:\PS> gh ExampleGroup -RecursionProperty MemberOf
+### USAGE EXAMPLES
 
-    .EXAMPLE           
-    C:\PS> Get-ADGroup ExampleGroup | Get-Hierarchy -RecursionProperty MemberOf
-    
-    .EXAMPLE           
-    C:\PS> Get-ADGroup ExampleGroup | gh
-    
-    .EXAMPLE
-    C:\PS> Get-ADGroup -Filter {Name -like 'ExampleGroups*'} | Get-Hierarchy
-    
-    .EXAMPLE           
-    C:\PS> 'Group1,Group2,Group3'.split(',') | Get-Hierarchy -RecursionProperty MemberOf
+`C:\PS> Get-Hierarchy ExampleGroup`
 
-    .NOTES
-    Author: Santiago Squarzon.
- 
+`C:\PS> gh ExampleGroup -RecursionProperty MemberOf`
+
+`C:\PS> Get-ADGroup ExampleGroup | Get-Hierarchy -RecursionProperty MemberOf`
+
+`C:\PS> Get-ADGroup ExampleGroup | gh`
+
+`C:\PS> Get-ADGroup -Filter {Name -like 'ExampleGroups*'} | Get-Hierarchy`
+           
+`C:\PS> 'Group1,Group2,Group3'.split(',') | Get-Hierarchy -RecursionProperty MemberOf`
+
+
 ![Alt text](/Examples/1.png?raw=true)
 ![Alt text](/Examples/2.png?raw=true)
 ![Alt text](/Examples/3.png?raw=true)
