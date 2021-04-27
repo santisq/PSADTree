@@ -11,7 +11,6 @@ Helps identifying 'Circular Nested Groups'.
 `<Object[]> // System.Array`
 
 <ul>
-Returns with properties:
     <li> InputParameter: The input user or group </li>
     <li> Index: The object on each level of recursion </li>
     <li> Recursion: The level of recursion or nesting </li>
