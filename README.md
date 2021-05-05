@@ -2,7 +2,7 @@
 
 ### DESCRIPTION
 Gets Group's and User's membership or Group parentship and draws it's hierarchy.
-Helps identifying 'Circular Nested Groups'.
+Helps identifying <b>Circular Nested Groups</b>.
     
 ### PARAMETER
 `<Name>` // Objects of class User or Group.
@@ -17,6 +17,13 @@ Helps identifying 'Circular Nested Groups'.
     <li> Class: The objectClass </li>
     <li> Hierarchy: The hierarchy map of the input paremeter </li>
 </ul>
+
+### REQUIREMENTS
+<ul>
+    <li>PowerShell v5.1</li>
+    <li>ActiveDirectory PS Module</li>
+</ul>
+
 
 ### USAGE EXAMPLES
 
