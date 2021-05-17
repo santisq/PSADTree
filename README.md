@@ -27,17 +27,19 @@ Helps identifying <b>Circular Nested Groups</b>.
 
 ### USAGE EXAMPLES
 
-`C:\PS> Get-Hierarchy ExampleGroup`
+```
+PS C:\> Get-Hierarchy ExampleGroup
 
-`C:\PS> gh ExampleGroup -RecursionProperty MemberOf`
+PS C:\> gh ExampleGroup -RecursionProperty MemberOf
 
-`C:\PS> Get-ADGroup ExampleGroup | Get-Hierarchy -RecursionProperty MemberOf`
+PS C:\> Get-ADGroup ExampleGroup | Get-Hierarchy -RecursionProperty MemberOf
 
-`C:\PS> Get-ADGroup ExampleGroup | gh`
+PS C:\> Get-ADGroup ExampleGroup | gh
 
-`C:\PS> Get-ADGroup -Filter {Name -like 'ExampleGroups*'} | Get-Hierarchy`
+PS C:\> Get-ADGroup -Filter {Name -like 'ExampleGroups*'} | Get-Hierarchy
            
-`C:\PS> 'Group1,Group2,Group3'.split(',') | Get-Hierarchy -RecursionProperty MemberOf`
+PS C:\> 'Group1,Group2,Group3'.split(',') | Get-Hierarchy -RecursionProperty MemberOf
+```
 
 
 ![Alt text](/Examples/1.png?raw=true)
