@@ -5,25 +5,22 @@ Gets Group's and User's membership or Group parentship and draws it's hierarchy.
 Helps identifying <b>Circular Nested Groups</b>.
     
 ### PARAMETER
-`<Name>` // Objects of class User or Group.
+`<Name>` Objects of class User or Group.
 
 ### OUTPUTS
-`<Object[]> // System.Array`
+`<Object[]>`
 
-<ul>
-    <li> InputParameter: The input user or group </li>
-    <li> Index: The object on each level of recursion </li>
-    <li> Recursion: The level of recursion or nesting </li>
-    <li> Class: The objectClass </li>
-    <li> Hierarchy: The hierarchy map of the input paremeter </li>
-</ul>
+- `InputParameter` The input user or group </li>
+- `Index` The object on each level of recursion </li>
+- `Recursion` The level of recursion or nesting </li>
+- `Class` The objectClass </li>
+- `Hierarchy` The hierarchy map of the input paremeter </li>
 
 ### REQUIREMENTS
 <ul>
     <li>PowerShell v5.1</li>
     <li>ActiveDirectory PS Module</li>
 </ul>
-
 
 ### USAGE EXAMPLES
 
