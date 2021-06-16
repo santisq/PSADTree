@@ -1,4 +1,4 @@
-﻿function Get-Hierarchy{
+function Get-Hierarchy {
 <#
     .SYNOPSIS
     Gets group membership or parentship and draws it's hierarchy.
@@ -43,29 +43,25 @@
 [cmdletbinding()]
 [alias('gh')]
 param(
-    [parameter(mandatory,valuefrompipeline)]
+    [parameter(Mandatory,ValueFromPipeline)]
     [string]$Name,
     [validateset('MemberOf','Member')]
-    [string]$RecursionProperty='Member'
+    [string]$RecursionProperty = 'Member'
 )
 
-begin{
+    begin
+    {
+        # Requires -Modules ActiveDirectory
+        $ErrorActionPreference = 'Stop'
+        $txtInfo = (Get-Culture).TextInfo
+        Get-ChildItem "$PSScriptRoot\Dependencies\*.ps1" | Import-Module
+    }
 
-#requires -Modules ActiveDirectory
-
-$txtInfo=(Get-Culture).TextInfo
-
-ls "$PSScriptRoot\Dependencies\*.ps1"|%{. $_.FullName}
-
-}
-
-process{
-
-$script:Index=New-Object System.Collections.ArrayList
-recHierarchy -Name $Name -RecursionProperty $RecursionProperty
-Draw-Hierarchy -Array $Index
-rv Index -Scope Global -Force 2>$null
-
-}
-
+    process
+    {
+        $script:Index = New-Object System.Collections.ArrayList
+        RecHierarchy -Name $Name -RecursionProperty $RecursionProperty
+        Draw-Hierarchy -Array $Index
+        Remove-Variable Index -Scope Global -Force -ErrorAction SilentlyContinue
+    }
 }
