@@ -1,96 +1,110 @@
-﻿function recHierarchy{
+function RecHierarchy {
 param(
     [parameter(mandatory)]
     [String]$Name,
-    [Int]$Recursion=0,
+    [Int]$Recursion = 0,
     [validateset('MemberOf','Member')]
-    [string]$RecursionProperty='Member'
+    [string]$RecursionProperty = 'Member'
 )
 
-$errorMessage={
-"
-Group Name: $($Group.Name)
-Member: $(($Member -replace 'CN=').Split(',')[0])
-Error Message: $_
-`n"
-}
-
-$thisObject=shouldProcess -Name $Name -RecursionProperty $RecursionProperty
-
-$Hierarchy=$(
-    ForEach($object in $thisObject.Property)
+    $ErrorMessage = 
     {
-        try{shouldProcess -Name $object}
-        catch{Write-Warning $(&$errorMessage)}
+        "`nGroup Name: {0}`nMember: {1}`nError Message: $_`n" -f $Group.Name, $Member.Split(',')[0].Replace('CN=','')
     }
-)|Sort -Descending ObjectClass
 
-$script:Index.Add(
+    $thisObject = ShouldProcess -Name $Name -RecursionProperty $RecursionProperty
+
+    $Hierarchy = $(
+    foreach($object in $thisObject.Property)
+    {
+        try
+        {
+            shouldProcess -Name $object
+        }
+        catch
+        {
+            Write-Warning (& $errorMessage)
+        }
+    }) | Sort-Object -Descending ObjectClass
+
+    $thisInput = if($Index[0].Index)
+    {
+        $Index[0].Index
+    }
+    else
+    {
+        $thisObject.Name
+    }
+
+    $script:Index.Add(
     [pscustomobject]@{
-        InputParameter=$(
-            if($Index[0].Index){$Index[0].Index}
-            else{$thisObject.Name}
-            )
-        Index=$thisObject.Name
-        Class=$txtInfo.ToTitleCase($thisObject.ObjectClass)
-        Recursion=$Recursion
-        Hierarchy=Indent -String $thisObject.Name -Indent $Recursion
+        InputParameter = $thisInput
+        Index = $thisObject.Name
+        Class = $txtInfo.ToTitleCase($thisObject.ObjectClass)
+        Recursion = $Recursion
+        Hierarchy = Indent -String $thisObject.Name -Indent $Recursion
     }) > $null
     
-$Recursion++
+    $Recursion++
 
-foreach($object in $Hierarchy){
+    foreach($object in $Hierarchy)
+    {
+        $class = $txtInfo.ToTitleCase($object.ObjectClass)
 
-if($object.Name -in $Index.Index){
-    [int]$i=$Recursion
-    do{
-        $i--
-        $z=($index.where({$_.Recursion -eq $i})).Index|select -last 1
-        if($object.Name -eq $z){$layer=$true}
-    }until($i -eq 0 -or $layer -eq $true)
+        if($object.Name -in $Index.Index)
+        {
+            [int]$i = $Recursion
+            do
+            {
+                $i--
+                $z = $index.where({$_.Recursion -eq $i}).Index | Select-Object -Last 1
+                if($object.Name -eq $z)
+                {
+                    $layer = $true
+                }
+            }until($i -eq 0 -or $layer -eq $true)
                     
-    if($layer){
-        
-        $string=switch($object.ObjectClass)
-        {
-            'User'{$object.Name}
-            'Group'{"{0} <=> Circular Nested Group" -f $object.Name}
-        }
+            if($layer)
+            {    
+                $string = switch($object.ObjectClass)
+                {
+                    'User'
+                    { 
+                        $object.Name 
+                    }
+                    'Group'
+                    {
+                        "{0} <=> Circular Nested Group" -f $object.Name
+                    }
+                }
+            }
+            else
+            {
+                $string = switch($object.ObjectClass)
+                {
+                    'User'
+                    {
+                        $object.Name
+                    }
+                    'Group'
+                    {
+                        "{0} <=> Skipping // Processed" -f $object.Name
+                    }
+                }
+            }
 
-        $script:Index.Add(
+            $script:Index.Add(
             [pscustomobject]@{
-                InputParameter=$(
-                    if($Index[0].Index){$Index[0].Index}
-                    else{$thisObject.Name}
-                )
-                Index=$object.Name
-                Class=$txtInfo.ToTitleCase($object.ObjectClass)
-                Recursion=$Recursion
-                Hierarchy=Indent -String $string -Indent $Recursion
-        }) > $null
-    }
-    else{
-        
-        $string=switch($object.ObjectClass)
-        {
-            'User'{$object.Name}
-            'Group'{"{0} <=> Skipping // Processed" -f $object.Name}
+                InputParameter = $thisInput
+                Index = $object.Name
+                Class = $class
+                Recursion = $Recursion
+                Hierarchy = Indent -String $string -Indent $Recursion
+            }) > $null
         }
-
-        $script:Index.Add(
-            [pscustomobject]@{
-                InputParameter=$(
-                    if($Index[0].Index){$Index[0].Index}
-                    else{$thisObject.Name}
-                )
-                Index=$object.Name
-                Class=$txtInfo.ToTitleCase($object.ObjectClass)
-                Recursion=$Recursion
-                Hierarchy=Indent -String $string -Indent $Recursion
-        }) > $null
+        else
+        {
+            RecHierarchy -Name $object.Name -Recursion $Recursion -RecursionProperty $RecursionProperty
+        }
     }
-}
-else{recHierarchy -Name $object.Name -Recursion $Recursion -RecursionProperty $RecursionProperty}
-}
- 
 }
