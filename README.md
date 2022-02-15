@@ -34,7 +34,7 @@ PS C:\> Get-Hierarchy ExampleGroup
 PS C:\> gh ExampleGroup -RecursionProperty MemberOf
 PS C:\> Get-ADGroup ExampleGroup | Get-Hierarchy -RecursionProperty MemberOf
 PS C:\> Get-ADGroup ExampleGroup | gh
-PS C:\> Get-ADGroup -Filter {Name -like 'ExampleGroups*'} | Get-Hierarchy
+PS C:\> Get-ADGroup -Filter "Name -like 'ExampleGroups*'" | Get-Hierarchy
 PS C:\> 'Group1,Group2,Group3'.split(',') | Get-Hierarchy -RecursionProperty MemberOf
 ```
 
