@@ -19,7 +19,7 @@ Helps identifying <b>Circular Nested Groups</b>.
 ### REQUIREMENTS
 <ul>
     <li>PowerShell v5.1</li>
-    <li>ActiveDirectory PS Module</li>
+    <li>[ActiveDirectory Module](https://docs.microsoft.com/en-us/powershell/module/activedirectory/?view=windowsserver2022-ps)</li>
 </ul>
 
 ### USAGE EXAMPLES
