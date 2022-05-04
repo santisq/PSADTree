@@ -53,7 +53,7 @@ param(
     {
         # Requires -Modules ActiveDirectory
         $ErrorActionPreference = 'Stop'
-        $txtInfo = (Get-Culture).TextInfo
+        $culture = (Get-Culture).TextInfo
         Get-ChildItem "$PSScriptRoot\Dependencies\*.ps1" | Import-Module
     }
 
