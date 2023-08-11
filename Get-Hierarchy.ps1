@@ -56,7 +56,7 @@ function Get-Hierarchy {
         function RecHierarchy {
             param(
                 [parameter(mandatory)]
-                [String]$Name,
+                [String]$DistinguishedName,
                 [Int]$Recursion = 0,
                 [validateset('MemberOf','Member')]
                 [string]$RecursionProperty = 'Member'
@@ -251,7 +251,7 @@ function Get-Hierarchy {
     process {
         $script:Index = New-Object System.Collections.ArrayList
         $Group = ([System.DirectoryServices.DirectorySearcher] "(|(aNR==$Name)(distinguishedName=$Name))" ).FindOne()
-        RecHierarchy -Name $Name -RecursionProperty $RecursionProperty
+        RecHierarchy -DistinguishedName $Group.Properties.distinguishedname -RecursionProperty $RecursionProperty
         Draw-Hierarchy -Array $Index
         Remove-Variable Index -Scope Global -Force -ErrorAction SilentlyContinue
     }
