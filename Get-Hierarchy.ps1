@@ -53,6 +53,31 @@ function Get-Hierarchy {
     begin {
         $txtInfo = (Get-Culture).TextInfo
 
+        function GetObject {
+            param(
+                [parameter(mandatory)]
+                [string]$Name,
+                [string]$Server
+            )
+
+            try {
+                if ($Server -and [System.DirectoryServices.DirectoryEntry]::Exists("LDAP://$Server")) {
+                    $Entry = [System.DirectoryServices.DirectoryEntry]"LDAP://$Server"
+                }
+            } catch {
+                throw $_.Exception.InnerException
+            }
+
+            $Searcher = [System.DirectoryServices.DirectorySearcher]::new($Entry , "(|(aNR==$Name)(distinguishedName=$Name))")
+            $Object = $Searcher.FindOne()
+
+            if (-not $Object) {
+                throw ("Cannot find an object: '{0}' under: '{1}'." -f $Name, $Searcher.SearchRoot.distinguishedName.ToString())
+            }
+
+            return $Object
+        }
+
         function RecHierarchy {
             param(
                 [parameter(mandatory)]
@@ -218,8 +243,8 @@ function Get-Hierarchy {
 
     process {
         $script:Index = New-Object System.Collections.ArrayList
-        $Group = ([System.DirectoryServices.DirectorySearcher]"(|(aNR==$Name)(distinguishedName=$Name))" ).FindOne()
-        RecHierarchy -DistinguishedName $Group.Properties.distinguishedname -RecursionProperty $RecursionProperty
+        $Object = GetObject -Name $Name -Server $Server
+        RecHierarchy -DistinguishedName $Object.Properties.distinguishedname -RecursionProperty $RecursionProperty
         Draw-Hierarchy -Array $Index
         Remove-Variable Index -Scope Global -Force -ErrorAction SilentlyContinue
     }
