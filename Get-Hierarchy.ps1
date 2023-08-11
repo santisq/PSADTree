@@ -66,12 +66,12 @@ function Get-Hierarchy {
                 "`nGroup Name: {0}`nMember: {1}`nError Message: $_`n" -f $Group.Name, $Member.Split(',')[0].Replace('CN=','')
             }
 
-            $thisObject = QueryObject -Name $Name -RecursionProperty $RecursionProperty
+            $thisObject = QueryObject -DistinguishedName $DistinguishedName -RecursionProperty $RecursionProperty
 
             $Hierarchy = $(
             foreach($object in $thisObject.Property) {
                 try {
-                    QueryObject -Name $object
+                    QueryObject -DistinguishedName $object
                 }
                 catch {
                     Write-Warning (& $errorMessage)
@@ -140,7 +140,7 @@ function Get-Hierarchy {
                     }) > $null
                 }
                 else {
-                    RecHierarchy -Name $object.Name -Recursion $Recursion -RecursionProperty $RecursionProperty
+                    RecHierarchy -DistinguishedName $object.DistinguishedName -Recursion $Recursion -RecursionProperty $RecursionProperty
                 }
             }
         }
@@ -148,57 +148,25 @@ function Get-Hierarchy {
         function QueryObject {
             [cmdletbinding()]
             param(
-                [string]$Name,
+                [string]$DistinguishedName,
                 [validateset('MemberOf','Member')]
                 [string]$RecursionProperty
             )
 
-            $filter = "(|(distinguishedname=$Name)(samaccountname=$Name)(name=$Name))"
+            $object = [System.DirectoryServices.DirectoryEntry] "LDAP://$DistinguishedName"
 
-            switch($Name) {
-                'Administrators' {
-                    if($RecursionProperty) {
-                        $object = Get-ADGroup -LDAPFilter $filter -Properties $RecursionProperty
-                    }
-                    else {
-                        $object = Get-ADGroup -LDAPFilter $filter
-                    }
-                }
-
-                Default {
-                    if($RecursionProperty) {
-                        $object = Get-ADObject -LDAPFilter $filter -Properties $RecursionProperty
-                    }
-                    else {
-                        $object = Get-ADObject -LDAPFilter $filter
-                    }
-                }
-            }
-
-            if(-not $object) {
-                $ErrorMessage = "Cannot find an object with identity: '{0}' under: '{1}'." -f $Name,$((Get-ADRootDSE).defaultNamingContext)
-                throw $ErrorMessage
-            }
-
-            if($object.count -gt 1) {
-                throw "Multiple objects with Name '$Name' were found. Use DistinguishedName for unique output."
+            $Properties = [ordered] @{
+                Name = $object.name.ToString()
+                UserPrincipalName = $object.userPrincipalName.ToString()
+                DistinguishedName = $object.distinguishedName.ToString()
+                ObjectClass = $txtInfo.ToTitleCase($object.SchemaClassName.ToString())
             }
 
             if($RecursionProperty) {
-                [PScustomObject]@{
-                    Name = $object.Name
-                    UserPrincipalName = $props.UserPrincipalName
-                    ObjectClass = $txtInfo.ToTitleCase($object.ObjectClass)
-                    Property = $object.$RecursionProperty
-                }
-                return
+                $Properties["Property"] = $object.$RecursionProperty.GetEnumerator()
             }
 
-            [PScustomObject]@{
-                Name = $object.Name
-                UserPrincipalName = $props.UserPrincipalName
-                ObjectClass = $txtInfo.ToTitleCase($object.ObjectClass)
-            }
+            return ([psucstomobject] $Properties)
         }
 
         function Draw-Hierarchy {
