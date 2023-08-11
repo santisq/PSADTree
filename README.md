@@ -3,13 +3,14 @@
 ### DESCRIPTION
 Gets Group's and User's membership or Group parentship and draws it's hierarchy.
 Helps identifying <b>Circular Nested Groups</b>.
-    
+
 ### PARAMETER
 
 | Parameter Name | Description |
 | --- | --- |
 | `-Name <string>` | __Name, SamAccountName or DistinguishedName__ of an AD Object of the class __User__ or __Group__ |
 | `[-RecursionProperty <string>]` | Set AD attribute for recursion. __Valid Values__: `Member` / `MemberOf`. __Default Value__: `Member`  |
+| `[-Server <string>]` | __FQDN or NetBIOS name__ for the instance to connect to. |
 | `[<CommonParameters>]` | See [`about_CommonParameters`](https://go.microsoft.com/fwlink/?LinkID=113216) |
 
 ### OUTPUTS
@@ -24,7 +25,6 @@ Helps identifying <b>Circular Nested Groups</b>.
 ### REQUIREMENTS
 
 - PowerShell v5.1
-- [ActiveDirectory Module](https://docs.microsoft.com/en-us/powershell/module/activedirectory/?view=windowsserver2022-ps)</li>
 
 
 ### USAGE EXAMPLES
