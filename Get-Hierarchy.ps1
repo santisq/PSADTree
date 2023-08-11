@@ -178,17 +178,17 @@ function Get-Hierarchy {
                 [string]$RecursionProperty
             )
 
-            $object = [System.DirectoryServices.DirectoryEntry]"LDAP://$DistinguishedName"
+            $Object = [System.DirectoryServices.DirectoryEntry]"LDAP://$DistinguishedName"
 
             $Properties = [ordered]@{
-                Name = $object.name.ToString()
-                UserPrincipalName = $object.userPrincipalName.ToString()
-                DistinguishedName = $object.distinguishedName.ToString()
-                ObjectClass = $txtInfo.ToTitleCase($object.SchemaClassName.ToString())
+                Name = $Object.name.ToString()
+                UserPrincipalName = $Object.userPrincipalName.ToString()
+                DistinguishedName = $Object.distinguishedName.ToString()
+                ObjectClass = $txtInfo.ToTitleCase($Object.SchemaClassName.ToString())
             }
 
             if($RecursionProperty) {
-                $Properties["Property"] = $object.$RecursionProperty.GetEnumerator()
+                $Properties["Property"] = $Object.$RecursionProperty.GetEnumerator()
             }
 
             return ([pscustomobject]$Properties)
