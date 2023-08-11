@@ -51,8 +51,6 @@ function Get-Hierarchy {
     )
 
     begin {
-        $txtInfo = (Get-Culture).TextInfo
-
         function GetObject {
             param(
                 [parameter(mandatory)]
@@ -114,7 +112,7 @@ function Get-Hierarchy {
             [pscustomobject]@{
                 InputParameter = $thisInput
                 Index = $thisObject.Name
-                Class = $txtInfo.ToTitleCase($thisObject.ObjectClass)
+                Class = $thisObject.ObjectClass
                 Recursion = $Recursion
                 Hierarchy = Indent -String $thisObject.Name -Indent $Recursion
             }) > $null
@@ -122,7 +120,7 @@ function Get-Hierarchy {
             $Recursion++
 
             foreach($object in $Hierarchy) {
-                $class = $txtInfo.ToTitleCase($object.ObjectClass)
+                $class = $object.ObjectClass
 
                 if($object.Name -in $Index.Index) {
                     [int]$i = $Recursion
@@ -184,7 +182,7 @@ function Get-Hierarchy {
                 Name = $Object.name.ToString()
                 UserPrincipalName = $Object.userPrincipalName.ToString()
                 DistinguishedName = $Object.distinguishedName.ToString()
-                ObjectClass = $txtInfo.ToTitleCase($Object.SchemaClassName.ToString())
+                ObjectClass = $Object.SchemaClassName.ToString()
             }
 
             if($RecursionProperty) {
