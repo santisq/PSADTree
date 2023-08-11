@@ -45,6 +45,7 @@ function Get-Hierarchy {
     param(
         [parameter(Mandatory,ValueFromPipeline)]
         [string]$Name,
+        [string]$Server,
         [validateset('MemberOf','Member')]
         [string]$RecursionProperty = 'Member'
     )
