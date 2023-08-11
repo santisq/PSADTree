@@ -136,7 +136,7 @@ function Get-Hierarchy {
 
                     if($layer) {
                         $string = switch($object.ObjectClass) {
-                            'User' {
+                            default {
                                 $object.Name
                             }
                             'Group' {
@@ -146,7 +146,7 @@ function Get-Hierarchy {
                     }
                     else {
                         $string = switch($object.ObjectClass) {
-                            'User' {
+                            default {
                                 $object.Name
                             }
                             'Group' {
