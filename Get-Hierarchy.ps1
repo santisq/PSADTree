@@ -153,9 +153,9 @@ function Get-Hierarchy {
                 [string]$RecursionProperty
             )
 
-            $object = [System.DirectoryServices.DirectoryEntry] "LDAP://$DistinguishedName"
+            $object = [System.DirectoryServices.DirectoryEntry]"LDAP://$DistinguishedName"
 
-            $Properties = [ordered] @{
+            $Properties = [ordered]@{
                 Name = $object.name.ToString()
                 UserPrincipalName = $object.userPrincipalName.ToString()
                 DistinguishedName = $object.distinguishedName.ToString()
@@ -166,7 +166,7 @@ function Get-Hierarchy {
                 $Properties["Property"] = $object.$RecursionProperty.GetEnumerator()
             }
 
-            return ([psucstomobject] $Properties)
+            return ([pscustomobject]$Properties)
         }
 
         function Draw-Hierarchy {
@@ -218,7 +218,7 @@ function Get-Hierarchy {
 
     process {
         $script:Index = New-Object System.Collections.ArrayList
-        $Group = ([System.DirectoryServices.DirectorySearcher] "(|(aNR==$Name)(distinguishedName=$Name))" ).FindOne()
+        $Group = ([System.DirectoryServices.DirectorySearcher]"(|(aNR==$Name)(distinguishedName=$Name))" ).FindOne()
         RecHierarchy -DistinguishedName $Group.Properties.distinguishedname -RecursionProperty $RecursionProperty
         Draw-Hierarchy -Array $Index
         Remove-Variable Index -Scope Global -Force -ErrorAction SilentlyContinue
