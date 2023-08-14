@@ -129,6 +129,7 @@ function Get-Hierarchy {
                     Index          = $thisObject.Name
                     Class          = $thisObject.ObjectClass
                     Recursion      = $Recursion
+                    Domain         = $thisObject.Domain
                     Hierarchy      = [Tree]::Indent($thisObject.Name, $Recursion)
                 })
 
@@ -137,7 +138,7 @@ function Get-Hierarchy {
             foreach ($object in $Hierarchy) {
                 $class = $object.ObjectClass
 
-                if ($object.Name -in $Index.Index) {
+                if (($object.Name -in $Index.Index -and ($object.Domain -in $Index.Domain))) {
                     [int]$i = $Recursion
                     do {
                         $i--
@@ -174,6 +175,7 @@ function Get-Hierarchy {
                             Index          = $object.Name
                             Class          = $class
                             Recursion      = $Recursion
+                            Domain         = $object.Domain
                             Hierarchy      = [Tree]::Indent($string, $Recursion)
                         })
                 }
@@ -203,6 +205,7 @@ function Get-Hierarchy {
                 Name              = $Object.name.ToString()
                 UserPrincipalName = $Object.userPrincipalName.ToString()
                 DistinguishedName = $Object.distinguishedName.ToString()
+                Domain            = ($Object.distinguishedName.ToString() -isplit ",DC=")[1].ToUpper()
                 ObjectClass       = $Object.SchemaClassName.ToString()
             }
 
