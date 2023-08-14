@@ -21,28 +21,28 @@ public class PSADIdentity
     public PSADIdentity(SecurityIdentifier objectSid) =>
         _queryString = $"LDAP://<sid={objectSid}>";
 
-    public PSADIdentity(string identity) =>
+    private PSADIdentity(string identity) =>
         _queryString = string.Concat("LDAP://", identity);
 
     public static PSADIdentity Parse(string identity)
     {
-        if (Guid.TryParse(identity, out Guid guid))
-        {
-            return new(guid);
-        }
+    if (Guid.TryParse(identity, out Guid guid))
+    {
+        return new PSADIdentity(guid);
+    }
 
-        if (TryParseSid(identity, out SecurityIdentifier? sid))
-        {
-            return new(sid);
-        }
+    if (TryParseSid(identity, out SecurityIdentifier? sid))
+    {
+        return new PSADIdentity(sid);
+    }
 
-        if (s_re.IsMatch(identity))
-        {
-            return new(identity);
-        }
+    if (s_re.IsMatch(identity))
+    {
+        return new PSADIdentity(identity);
+    }
 
-        return new((SecurityIdentifier) new NTAccount(identity)
-            .Translate(typeof(SecurityIdentifier)));
+    return new((SecurityIdentifier)new NTAccount(identity)
+        .Translate(typeof(SecurityIdentifier)));
     }
 
     private static bool TryParseSid(
