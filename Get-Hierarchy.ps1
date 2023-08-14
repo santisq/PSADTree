@@ -43,103 +43,150 @@ function Get-Hierarchy {
     [cmdletbinding()]
     [alias('gh')]
     param(
-        [parameter(Mandatory,ValueFromPipeline)]
+        [parameter(Mandatory, ValueFromPipeline)]
         [string]$Name,
-        [validateset('MemberOf','Member')]
+        [string]$Server,
+        [validateset('MemberOf', 'Member')]
         [string]$RecursionProperty = 'Member'
     )
 
     begin {
-        $txtInfo = (Get-Culture).TextInfo
+        function GetObject {
+            param(
+                [parameter(Mandatory)]
+                [string]$Name,
+                [string]$Server
+            )
+
+            try {
+                if ($PSBoundParameters.ContainsKey('Server')) {
+                    $Entry = [adsi] "LDAP://$Server"
+                }
+            }
+            catch {
+                $PSCmdlet.ThrowTerminatingError($_)
+            }
+
+            $Searcher = [adsisearcher]::new(
+                $Entry,
+                "(|(name=$name)(samAccountName=$Name)(distinguishedName=$Name))")
+
+            $Object = $Searcher.FindOne()
+
+            if (-not $Object) {
+                $PSCmdlet.ThrowTerminatingError(
+                    [System.Management.Automation.ErrorRecord]::new(
+                        [System.ArgumentException] ("Cannot find an object: '{0}' under: '{1}'." -f $Name, $Searcher.SearchRoot.distinguishedName.ToString()),
+                        'ObjectNotFound',
+                        [System.Management.Automation.ErrorCategory]::ObjectNotFound,
+                        $Name))
+            }
+
+            $Object
+        }
 
         function RecHierarchy {
             param(
                 [parameter(mandatory)]
-                [String]$Name,
+                [String]$DistinguishedName,
                 [Int]$Recursion = 0,
-                [validateset('MemberOf','Member')]
+                [validateset('MemberOf', 'Member')]
                 [string]$RecursionProperty = 'Member'
             )
 
             $ErrorMessage = {
-                "`nGroup Name: {0}`nMember: {1}`nError Message: $_`n" -f $Group.Name, $Member.Split(',')[0].Replace('CN=','')
+                "`nGroup Name: {0}`nMember: {1}`nError Message: $_`n" -f $Group.Name, $Member.Split(',')[0].Replace('CN=', '')
             }
 
-            $thisObject = QueryObject -Name $Name -RecursionProperty $RecursionProperty
+            $queryObjectSplat = @{
+                DistinguishedName = $DistinguishedName
+                RecursionProperty = $RecursionProperty
+            }
 
-            $Hierarchy = $(
-            foreach($object in $thisObject.Property) {
-                try {
-                    QueryObject -Name $object
-                }
-                catch {
-                    Write-Warning (& $errorMessage)
-                }
-            }) | Sort-Object -Descending ObjectClass
+            $thisObject = QueryObject @queryObjectSplat
 
-            $thisInput = if($Index[0].Index) {
+            $Hierarchy = & {
+                foreach ($object in $thisObject.Property) {
+                    try {
+                        QueryObject -DistinguishedName $object
+                    }
+                    catch {
+                        Write-Warning (& $errorMessage)
+                    }
+                }
+            } | Sort-Object -Descending ObjectClass
+
+            $thisInput = if ($Index[0].Index) {
                 $Index[0].Index
             }
             else {
                 $thisObject.Name
             }
 
-            $script:Index.Add(
-            [pscustomobject]@{
-                InputParameter = $thisInput
-                Index = $thisObject.Name
-                Class = $txtInfo.ToTitleCase($thisObject.ObjectClass)
-                Recursion = $Recursion
-                Hierarchy = Indent -String $thisObject.Name -Indent $Recursion
-            }) > $null
+            $Index.Add(
+                [pscustomobject]@{
+                    InputParameter = $thisInput
+                    Index          = $thisObject.Name
+                    Class          = $thisObject.ObjectClass
+                    Recursion      = $Recursion
+                    Domain         = $thisObject.Domain
+                    Hierarchy      = [Tree]::Indent($thisObject.Name, $Recursion)
+                })
 
             $Recursion++
 
-            foreach($object in $Hierarchy) {
-                $class = $txtInfo.ToTitleCase($object.ObjectClass)
+            foreach ($object in $Hierarchy) {
+                $class = $object.ObjectClass
 
-                if($object.Name -in $Index.Index) {
+                if (($object.Name -in $Index.Index -and ($object.Domain -in $Index.Domain))) {
                     [int]$i = $Recursion
                     do {
                         $i--
-                        $z = $index.where({$_.Recursion -eq $i}).Index | Select-Object -Last 1
-                        if($object.Name -eq $z) {
+                        $z = $index.where({ $_.Recursion -eq $i }).Index | Select-Object -Last 1
+                        if ($object.Name -eq $z) {
                             $layer = $true
                         }
                     } until($i -eq 0 -or $layer -eq $true)
 
-                    if($layer) {
-                        $string = switch($object.ObjectClass) {
-                            'User' {
+                    if ($layer) {
+                        $string = switch ($object.ObjectClass) {
+                            default {
                                 $object.Name
                             }
                             'Group' {
-                                "{0} <=> Circular Nested Group" -f $object.Name
+                                '{0} <=> Circular Nested Group' -f $object.Name
                             }
                         }
                     }
                     else {
-                        $string = switch($object.ObjectClass) {
-                            'User' {
+                        $string = switch ($object.ObjectClass) {
+                            default {
                                 $object.Name
                             }
                             'Group' {
-                                "{0} <=> Skipping // Processed" -f $object.Name
+                                '{0} <=> Skipping // Processed' -f $object.Name
                             }
                         }
                     }
 
-                    $script:Index.Add(
-                    [pscustomobject]@{
-                        InputParameter = $thisInput
-                        Index = $object.Name
-                        Class = $class
-                        Recursion = $Recursion
-                        Hierarchy = Indent -String $string -Indent $Recursion
-                    }) > $null
+                    $Index.Add(
+                        [pscustomobject]@{
+                            InputParameter = $thisInput
+                            Index          = $object.Name
+                            Class          = $class
+                            Recursion      = $Recursion
+                            Domain         = $object.Domain
+                            Hierarchy      = [Tree]::Indent($string, $Recursion)
+                        })
                 }
                 else {
-                    RecHierarchy -Name $object.Name -Recursion $Recursion -RecursionProperty $RecursionProperty
+                    $recHierarchySplat = @{
+                        DistinguishedName = $object.DistinguishedName
+                        Recursion         = $Recursion
+                        RecursionProperty = $RecursionProperty
+                    }
+
+                    RecHierarchy @recHierarchySplat
                 }
             }
         }
@@ -147,110 +194,92 @@ function Get-Hierarchy {
         function QueryObject {
             [cmdletbinding()]
             param(
-                [string]$Name,
-                [validateset('MemberOf','Member')]
+                [string]$DistinguishedName,
+                [validateset('MemberOf', 'Member')]
                 [string]$RecursionProperty
             )
 
-            $filter = "(|(distinguishedname=$Name)(samaccountname=$Name)(name=$Name))"
+            $Object = [adsi] "LDAP://$DistinguishedName"
 
-            switch($Name) {
-                'Administrators' {
-                    if($RecursionProperty) {
-                        $object = Get-ADGroup -LDAPFilter $filter -Properties $RecursionProperty
-                    }
-                    else {
-                        $object = Get-ADGroup -LDAPFilter $filter
-                    }
-                }
-
-                Default {
-                    if($RecursionProperty) {
-                        $object = Get-ADObject -LDAPFilter $filter -Properties $RecursionProperty
-                    }
-                    else {
-                        $object = Get-ADObject -LDAPFilter $filter
-                    }
-                }
+            $Properties = [ordered]@{
+                Name              = $Object.name.ToString()
+                UserPrincipalName = $Object.userPrincipalName.ToString()
+                DistinguishedName = $Object.distinguishedName.ToString()
+                Domain            = ($Object.distinguishedName.ToString() -isplit ",DC=")[1].ToUpper()
+                ObjectClass       = $Object.SchemaClassName.ToString()
             }
 
-            if(-not $object) {
-                $ErrorMessage = "Cannot find an object with identity: '{0}' under: '{1}'." -f $Name,$((Get-ADRootDSE).defaultNamingContext)
-                throw $ErrorMessage
+            if ($RecursionProperty) {
+                $Properties['Property'] = $Object.$RecursionProperty
             }
 
-            if($object.count -gt 1) {
-                throw "Multiple objects with Name '$Name' were found. Use DistinguishedName for unique output."
-            }
-
-            if($RecursionProperty) {
-                [PScustomObject]@{
-                    Name = $object.Name
-                    UserPrincipalName = $props.UserPrincipalName
-                    ObjectClass = $txtInfo.ToTitleCase($object.ObjectClass)
-                    Property = $object.$RecursionProperty
-                }
-                return
-            }
-
-            [PScustomObject]@{
-                Name = $object.Name
-                UserPrincipalName = $props.UserPrincipalName
-                ObjectClass = $txtInfo.ToTitleCase($object.ObjectClass)
-            }
+            return [pscustomobject] $Properties
         }
 
-        function Draw-Hierarchy {
-            param(
-                [System.Collections.ArrayList]$Array
-            )
+        class Tree {
+            hidden static [regex] $s_re = [regex]::new(
+                '└|\S',
+                [System.Text.RegularExpressions.RegexOptions]::Compiled)
 
-            $Array.Reverse()
-
-            for($i=0;$i -lt $Array.Count;$i++) {
-                if($Array[$i+1] -and $Array[$i].Hierarchy.IndexOf('|_') -lt $Array[$i+1].Hierarchy.IndexOf('|_')) {
-                    $z = $i+1
-                    $ind = $Array[$i].Hierarchy.IndexOf('|_')
-                    while($Array[$z].Hierarchy[$ind] -ne '|') {
-                        $string = ($Array[$z].Hierarchy).ToCharArray()
-                        $string[$ind] = '|'
-                        $string = $string -join ''
-                        $Array[$z].Hierarchy = $string
-                        $z++
-                        if($Array[$z].Hierarchy[$ind] -eq '|') {
-                            break
-                        }
-                    }
+            static [string] Indent([string] $inputString, [int] $indentation) {
+                if ($indentation -eq 0) {
+                    return $inputString
                 }
+
+                return [string]::new(' ', (4 * $indentation) - 4) + '└── ' + $inputString
             }
 
-            $Array.Reverse()
-            return $Array
-        }
+            static [object[]] ConvertToTree([object[]] $inputObject) {
+                for ($i = 0; $i -lt $inputObject.Length; $i++) {
+                    $index = $inputObject[$i].Hierarchy.IndexOf('└')
 
-        function Indent {
-            param(
-                [String]$String,
-                [Int]$Indent
-            )
+                    if ($index -lt 0) {
+                        continue
+                    }
 
-            $x='_';$y='|';$z='    '
+                    $z = $i - 1
 
-            switch($Indent) {
-                {$_ -eq 0}{
-                    return $String
+                    while (-not [Tree]::s_re.IsMatch($inputObject[$z].Hierarchy[$index].ToString())) {
+                        $replace = $inputObject[$z].Hierarchy.ToCharArray()
+                        $replace[$index] = '│'
+                        $inputObject[$z].Hierarchy = [string]::new($replace)
+                        $z--
+                    }
+
+                    if ($inputObject[$z].Hierarchy[$index] -eq '└') {
+                        $replace = $inputObject[$z].Hierarchy.ToCharArray()
+                        $replace[$index] = '├'
+                        $inputObject[$z].Hierarchy = [string]::new($replace)
+                    }
                 }
-                {$_ -gt 0}{
-                    return "$($z*$_)$y$x $string"
-                }
+
+                return $inputObject
             }
         }
     }
 
     process {
-        $script:Index = New-Object System.Collections.ArrayList
-        RecHierarchy -Name $Name -RecursionProperty $RecursionProperty
-        Draw-Hierarchy -Array $Index
-        Remove-Variable Index -Scope Global -Force -ErrorAction SilentlyContinue
+        try {
+            $getObjectSplat = @{
+                Name = $Name
+            }
+
+            if ($PSBoundParameters.ContainsKey('Server')) {
+                $getObjectSplat['Server'] = $Server
+            }
+            $Index = [System.Collections.Generic.List[object]]::new()
+            $Object = GetObject @getObjectSplat
+
+            $recHierarchySplat = @{
+                DistinguishedName = $Object.Properties.distinguishedname
+                RecursionProperty = $RecursionProperty
+            }
+
+            RecHierarchy @recHierarchySplat
+            [Tree]::ConvertToTree($Index.ToArray())
+        }
+        catch {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
     }
 }
