@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "mF8JLsMSik1z+/aXDDaomSZHAI7mhgLGi7HZ0TzhIhmU1QQwYLAjaj/qsICGO4AsSgGtCDxljco5aS65aKda1A==",
+  "success": true,
+  "projectFilePath": "d:\\Zen\\Documents\\Scripts\\Get-Hierarchy\\src\\PSADTree\\PSADTree.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Zen\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\Zen\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512",
+    "C:\\Users\\Zen\\.nuget\\packages\\powershellstandard.library\\5.1.1\\powershellstandard.library.5.1.1.nupkg.sha512"
+  ],
+  "logs": []
+}
