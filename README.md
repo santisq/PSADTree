@@ -1,10 +1,11 @@
 # Get-Hierarchy
 
-### DESCRIPTION
+## DESCRIPTION
+
 Gets Group's and User's membership or Group parentship and draws it's hierarchy.
 Helps identifying <b>Circular Nested Groups</b>.
 
-### PARAMETER
+## PARAMETER
 
 | Parameter Name | Description |
 | --- | --- |
@@ -13,7 +14,8 @@ Helps identifying <b>Circular Nested Groups</b>.
 | `[-Server <string>]` | __FQDN or NetBIOS name__ for the instance to connect to. |
 | `[<CommonParameters>]` | See [`about_CommonParameters`](https://go.microsoft.com/fwlink/?LinkID=113216) |
 
-### OUTPUTS
+## OUTPUTS
+
 `<Object[]>`
 
 - `InputParameter` The input user or group </li>
@@ -22,12 +24,11 @@ Helps identifying <b>Circular Nested Groups</b>.
 - `Class` The objectClass </li>
 - `Hierarchy` The hierarchy map of the input paremeter </li>
 
-### REQUIREMENTS
+## REQUIREMENTS
 
 - PowerShell v5.1
 
-
-### USAGE EXAMPLES
+## USAGE EXAMPLES
 
 ```
 PS C:\> Get-Hierarchy ExampleGroup
@@ -37,7 +38,6 @@ PS C:\> Get-ADGroup ExampleGroup | gh
 PS C:\> Get-ADGroup -Filter "Name -like 'ExampleGroups*'" | Get-Hierarchy
 PS C:\> 'Group1,Group2,Group3'.split(',') | Get-Hierarchy -RecursionProperty MemberOf
 ```
-
 
 ![Alt text](/Examples/1.png?raw=true)
 ![Alt text](/Examples/2.png?raw=true)
