@@ -11,10 +11,7 @@ public sealed class GetPSADHierarchyCommand : PSCmdlet
 
     protected override void ProcessRecord()
     {
-        Debug.Assert(
-            Identity is not null,
-            "Mandatory Parameters can't be null.");
-
+        Dbg.Assert(Identity is not null);
         WriteObject(Identity.GetEntry());
     }
 }
