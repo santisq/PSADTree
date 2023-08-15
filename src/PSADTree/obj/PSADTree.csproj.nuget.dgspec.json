@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {}
+    "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {}
   },
   "projects": {
-    "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {
-      "version": "1.1.0",
+    "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {
+      "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
+        "projectUniqueName": "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
         "projectName": "PSADTree",
-        "projectPath": "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
+        "projectPath": "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
         "packagesPath": "C:\\Users\\Zen\\.nuget\\packages\\",
-        "outputPath": "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\obj\\",
+        "outputPath": "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\obj\\",
         "projectStyle": "PackageReference",
         "crossTargeting": true,
         "configFilePaths": [
@@ -22,8 +22,7 @@
           "net6.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {},
-          "https://www.nuget.org/api/v2": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net6.0": {
@@ -46,6 +45,11 @@
           "targetAlias": "net6.0",
           "dependencies": {
             "System.DirectoryServices": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "System.DirectoryServices.AccountManagement": {
               "suppressParent": "All",
               "target": "Package",
               "version": "[6.0.0, )"
@@ -106,11 +110,6 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[5.1.1, )"
-            },
-            "System.DirectoryServices": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[4.5.0, )"
             }
           },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.110\\RuntimeIdentifierGraph.json"

@@ -7,7 +7,7 @@ namespace PSADTree;
 public sealed class GetPSADHierarchyCommand : PSCmdlet
 {
     [Parameter(Mandatory = true, ValueFromPipeline = true)]
-    public PSADIdentity? Identity { get; set; }
+    public Identity? Identity { get; set; }
 
     protected override void ProcessRecord()
     {

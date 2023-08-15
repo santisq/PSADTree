@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
+using System.DirectoryServices.AccountManagement;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 
 namespace PSADTree;
 
-public class PSADIdentity
+public class Identity
 {
     private readonly string _queryString;
 
@@ -15,34 +16,39 @@ public class PSADIdentity
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled,
         TimeSpan.FromMilliseconds(10));
 
-    public PSADIdentity(Guid objectGuid) =>
+    public Identity(Guid objectGuid) =>
         _queryString = $"LDAP://<guid={objectGuid}>";
 
-    public PSADIdentity(SecurityIdentifier objectSid) =>
+    public Identity(SecurityIdentifier objectSid) =>
         _queryString = $"LDAP://<sid={objectSid}>";
 
-    private PSADIdentity(string identity) =>
+    private Identity(string identity) =>
         _queryString = string.Concat("LDAP://", identity);
 
-    public static PSADIdentity Parse(string identity)
+    public static Identity Parse(string identity)
     {
-    if (Guid.TryParse(identity, out Guid guid))
-    {
-        return new PSADIdentity(guid);
-    }
+        PrincipalContext context = new(ContextType.Domain);
+        UserPrincipal.FindByIdentity(context, identity);
 
-    if (TryParseSid(identity, out SecurityIdentifier? sid))
-    {
-        return new PSADIdentity(sid);
-    }
 
-    if (s_re.IsMatch(identity))
-    {
-        return new PSADIdentity(identity);
-    }
 
-    return new((SecurityIdentifier)new NTAccount(identity)
-        .Translate(typeof(SecurityIdentifier)));
+        if (Guid.TryParse(identity, out Guid guid))
+        {
+            return new Identity(guid);
+        }
+
+        if (TryParseSid(identity, out SecurityIdentifier? sid))
+        {
+            return new Identity(sid);
+        }
+
+        if (s_re.IsMatch(identity))
+        {
+            return new Identity(identity);
+        }
+
+        return new((SecurityIdentifier)new NTAccount(identity)
+            .Translate(typeof(SecurityIdentifier)));
     }
 
     private static bool TryParseSid(
