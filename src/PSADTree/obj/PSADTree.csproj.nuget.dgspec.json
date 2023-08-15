@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {}
+    "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {
+    "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
+        "projectUniqueName": "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
         "projectName": "PSADTree",
-        "projectPath": "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
+        "projectPath": "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\PSADTree.csproj",
         "packagesPath": "C:\\Users\\Zen\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Zen\\Documents\\PSADTree\\src\\PSADTree\\obj\\",
+        "outputPath": "D:\\Zen\\Documents\\Scripts\\PSADTree\\src\\PSADTree\\obj\\",
         "projectStyle": "PackageReference",
         "crossTargeting": true,
         "configFilePaths": [
@@ -22,7 +22,8 @@
           "net6.0"
         ],
         "sources": {
-          "https://api.nuget.org/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {},
+          "https://www.nuget.org/api/v2": {}
         },
         "frameworks": {
           "net6.0": {

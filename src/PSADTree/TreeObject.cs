@@ -1,20 +1,37 @@
-using System.DirectoryServices;
-
 namespace PSADTree;
 
-public abstract class TreeObject<T>
-    where T : DirectoryEntry
+public sealed class TreeObject
 {
     internal string Source { get; }
 
-    internal int Depth { get; set; }
+    internal int Depth { get; }
+
+    public string SamAccountName { get; }
+
+    public string ObjectClass { get; }
 
     public string Hierarchy { get; internal set; }
 
-    protected TreeObject(T entry, int depth, string source)
+    internal TreeObject(
+        string source,
+        string samAccountName,
+        string objectClass,
+        int depth)
     {
         Source = source;
-        Hierarchy = DirectoryEntry.
-        Instance = identity;
+        SamAccountName = samAccountName;
+        ObjectClass = objectClass;
+        Hierarchy = samAccountName.Indent(depth);
+    }
+
+    internal TreeObject(
+        string source,
+        string samAccountName,
+        string objectClass)
+    {
+        Source = source;
+        SamAccountName = samAccountName;
+        ObjectClass = objectClass;
+        Hierarchy = samAccountName;
     }
 }
