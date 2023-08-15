@@ -1,3 +1,4 @@
+using System.DirectoryServices.AccountManagement;
 using System.Text.RegularExpressions;
 
 namespace PSADTree;
@@ -7,8 +8,15 @@ internal static class TreeExtensions
     private static readonly Regex s_re = new(@"└|\S", RegexOptions.Compiled);
 
     internal static string Indent(this string inputString, int indentation) =>
-        new string(' ', (4 * indentation) - 4) + "└── " + inputString;
+        indentation is 0
+            ? inputString
+            : new string(' ', (4 * indentation) - 4) + "└── " + inputString;
 
+    internal static TreeObject ToTreeObject(this Principal principal, string source, int depth) =>
+        new(source, principal.SamAccountName, principal.StructuralObjectClass, depth);
+
+    internal static TreeObject ToTreeObject(this Principal principal, string source) =>
+        new(source, principal.SamAccountName, principal.StructuralObjectClass);
     internal static TreeObject[] ConvertToTree(
         this TreeObject[] inputObject)
     {
