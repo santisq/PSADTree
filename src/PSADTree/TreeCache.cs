@@ -16,6 +16,17 @@ internal sealed class TreeCache
     internal void Add(string distinguishedName, TreeObject principal) =>
         _cache.Add(distinguishedName, principal);
 
+    internal bool TryAdd(string distinguishedName, TreeObject principal)
+    {
+        if (_cache.ContainsKey(distinguishedName))
+        {
+            return false;
+        }
+
+        _cache.Add(distinguishedName, principal);
+        return true;
+    }
+
     internal bool TryGet(string distinguishedName, out TreeObject? principal) =>
         _cache.TryGetValue(distinguishedName, out principal);
 

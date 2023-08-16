@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 
 namespace PSADTree;
@@ -30,4 +31,10 @@ internal sealed class TreeIndex
     }
 
     internal TreeObject[] GetTree() => _output.ToArray().ConvertToTree();
+
+    internal void Clear()
+    {
+        _output.Clear();
+        _principals.Clear();
+    }
 }

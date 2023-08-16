@@ -64,6 +64,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         string source)
     {
         _stack.Push((depth: 0, groupPrincipal));
+        _index.Clear();
 
         GroupPrincipal current;
         int depth;
@@ -71,6 +72,16 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         while (_stack.Count > 0)
         {
             (depth, current) = _stack.Pop();
+            TreeObject treeObject = current.ToTreeObject(source, depth);
+
+            if (!_cache.TryAdd(current.DistinguishedName, treeObject))
+            {
+                treeObject.Hierarchy += " <-> Possible Circular Reference (need to handle this later)";
+                _index.Add(treeObject);
+                // handle possible circular reference here
+                continue;
+            }
+
             depth++;
 
             try
@@ -84,14 +95,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                         continue;
                     }
 
-                    if (!_cache.TryGet(group.DistinguishedName, out TreeObject? treeObject))
-                    {
-                        _cache.Add(
-                            group.DistinguishedName,
-                            group.ToTreeObject(source, depth));
-
-                        _stack.Push((depth, group));
-                    }
+                    _stack.Push((depth, group));
                 }
 
                 _index.Add(_cache[current.DistinguishedName]);
@@ -116,5 +120,6 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
     {
         _context?.Dispose();
         _cache?.Clear();
+        _index?.Clear();
     }
 }
