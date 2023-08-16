@@ -12,11 +12,6 @@ internal static class TreeExtensions
 
     internal static string Indent(this string inputString, int indentation)
     {
-        if (indentation is 0)
-        {
-            return inputString;
-        }
-
         s_sb.Clear();
 
         return s_sb.Append(' ', (4 * indentation) - 4)

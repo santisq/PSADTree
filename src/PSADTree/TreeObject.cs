@@ -14,19 +14,20 @@ public sealed class TreeObject
 
     public string ObjectClass { get; }
 
+    public string Hierarchy { get; internal set; }
+
     public string DistinguishedName { get; }
 
     public Guid? ObjectGuid { get; }
 
     public SecurityIdentifier ObjectSid { get; }
 
-    public string Hierarchy { get; internal set; }
-
     internal TreeObject(
         string source,
         Principal principal,
         int depth)
     {
+        Depth = depth;
         Source = source;
         SamAccountName = principal.SamAccountName;
         ObjectClass = principal.StructuralObjectClass;

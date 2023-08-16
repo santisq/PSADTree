@@ -12,7 +12,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 {
     private PrincipalContext? _context;
 
-    private readonly Stack<(int depth, GroupPrincipal group)> _stack = new();
+    private readonly Stack<(GroupPrincipal group, TreeObject treeObject)> _stack = new();
 
     private readonly TreeCache _cache = new();
 
@@ -102,15 +102,14 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         GroupPrincipal groupPrincipal,
         string source)
     {
-        _stack.Push((depth: 0, groupPrincipal));
+        int depth;
         _index.Clear();
         _cache.Clear();
+        _stack.Push((groupPrincipal, groupPrincipal.ToTreeObject(source)));
 
         while (_stack.Count > 0)
         {
-            (int depth, GroupPrincipal current) = _stack.Pop();
-
-            TreeObject treeObject = current.ToTreeObject(source, depth);
+            (GroupPrincipal current, TreeObject treeObject) = _stack.Pop();
 
             if (current is { DistinguishedName: null })
             {
@@ -127,7 +126,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                 continue;
             }
 
-            depth++;
+            depth = treeObject.Depth + 1;
 
             try
             {
@@ -165,7 +164,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                 continue;
             }
 
-            _stack.Push((depth, group));
+            _stack.Push((group, group.ToTreeObject(source, depth)));
         }
     }
 
