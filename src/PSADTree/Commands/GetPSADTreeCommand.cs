@@ -106,9 +106,6 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         _index.Clear();
         _cache.Clear();
 
-        // GroupPrincipal? current;
-        // int depth;
-
         while (_stack.Count > 0)
         {
             (int depth, GroupPrincipal current) = _stack.Pop();
