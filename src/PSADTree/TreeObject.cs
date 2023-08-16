@@ -1,3 +1,7 @@
+using System;
+using System.DirectoryServices.AccountManagement;
+using System.Security.Principal;
+
 namespace PSADTree;
 
 public sealed class TreeObject
@@ -10,28 +14,40 @@ public sealed class TreeObject
 
     public string ObjectClass { get; }
 
+    public string DistinguishedName { get; }
+
+    public Guid? ObjectGuid { get; }
+
+    public SecurityIdentifier ObjectSid { get; }
+
     public string Hierarchy { get; internal set; }
 
     internal TreeObject(
         string source,
-        string samAccountName,
-        string objectClass,
+        Principal principal,
         int depth)
     {
         Source = source;
-        SamAccountName = samAccountName;
-        ObjectClass = objectClass;
-        Hierarchy = samAccountName.Indent(depth);
+        SamAccountName = principal.SamAccountName;
+        ObjectClass = principal.StructuralObjectClass;
+        DistinguishedName = principal.DistinguishedName;
+        ObjectGuid = principal.Guid;
+        ObjectSid = principal.Sid;
+        Hierarchy = SamAccountName.Indent(depth);
     }
 
     internal TreeObject(
         string source,
-        string samAccountName,
-        string objectClass)
+        Principal principal)
     {
         Source = source;
-        SamAccountName = samAccountName;
-        ObjectClass = objectClass;
-        Hierarchy = samAccountName;
+        SamAccountName = principal.SamAccountName;
+        ObjectClass = principal.StructuralObjectClass;
+        DistinguishedName = principal.DistinguishedName;
+        ObjectGuid = principal.Guid;
+        ObjectSid = principal.Sid;
+        Hierarchy = SamAccountName;
     }
+
+    public override string ToString() => DistinguishedName;
 }

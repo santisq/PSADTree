@@ -26,10 +26,11 @@ internal static class TreeExtensions
     }
 
     internal static TreeObject ToTreeObject(this Principal principal, string source, int depth) =>
-        new(source, principal.SamAccountName, principal.StructuralObjectClass, depth);
+        new(source, principal, depth);
 
     internal static TreeObject ToTreeObject(this Principal principal, string source) =>
-        new(source, principal.SamAccountName, principal.StructuralObjectClass);
+        new(source, principal);
+
     internal static TreeObject[] ConvertToTree(
         this TreeObject[] inputObject)
     {

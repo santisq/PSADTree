@@ -12,14 +12,11 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 {
     private PrincipalContext? _context;
 
-    [ThreadStatic]
-    private static readonly Stack<(int depth, GroupPrincipal group)> _stack = new();
+    private readonly Stack<(int depth, GroupPrincipal group)> _stack = new();
 
-    [ThreadStatic]
-    private static readonly TreeCache _cache = new();
+    private readonly TreeCache _cache = new();
 
-    [ThreadStatic]
-    private static readonly TreeIndex _index = new();
+    private readonly TreeIndex _index = new();
 
     [Parameter(
         Position = 0,
@@ -29,11 +26,20 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
     [Alias("DistinguishedName")]
     public string? Identity { get; set; }
 
+    [Parameter]
+    public string? Server { get; set; }
+
     protected override void BeginProcessing()
     {
         try
         {
-            _context = new PrincipalContext(ContextType.Domain);
+            if (Server is null)
+            {
+                _context = new PrincipalContext(ContextType.Domain);
+                return;
+            }
+
+            _context = new PrincipalContext(ContextType.Domain, Server);
         }
         catch (Exception e)
         {
@@ -47,15 +53,48 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
 
-        using Principal principal = Principal.FindByIdentity(_context, Identity);
-
-        if (principal is GroupPrincipal group)
+        try
         {
-            WriteObject(
-                sendToPipeline: Traverse(
-                    groupPrincipal: group,
-                    source: group.DistinguishedName),
-                enumerateCollection: true);
+            using Principal? principal = Principal.FindByIdentity(_context, Identity);
+            if (principal is null)
+            {
+                WriteError(new ErrorRecord(
+                    new NoMatchingPrincipalException($"Cannot find an object with identity: '{Identity}'."),
+                    "IdentityNotFound",
+                    ErrorCategory.ObjectNotFound,
+                    Identity));
+
+                return;
+            }
+
+            if (principal is GroupPrincipal group)
+            {
+                WriteObject(
+                    sendToPipeline: Traverse(
+                        groupPrincipal: group,
+                        source: group.DistinguishedName),
+                    enumerateCollection: true);
+            }
+        }
+        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        {
+            throw;
+        }
+        catch (MultipleMatchesException e)
+        {
+            WriteError(new ErrorRecord(
+                e,
+                "AmbiguousIdentity",
+                ErrorCategory.InvalidResult,
+                Identity));
+        }
+        catch (Exception e)
+        {
+            WriteError(new ErrorRecord(
+                e,
+                "Unspecified",
+                ErrorCategory.NotSpecified,
+                Identity));
         }
     }
 
@@ -65,19 +104,28 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
     {
         _stack.Push((depth: 0, groupPrincipal));
         _index.Clear();
+        _cache.Clear();
 
-        GroupPrincipal current;
-        int depth;
+        // GroupPrincipal? current;
+        // int depth;
 
         while (_stack.Count > 0)
         {
-            (depth, current) = _stack.Pop();
+            (int depth, GroupPrincipal current) = _stack.Pop();
+
             TreeObject treeObject = current.ToTreeObject(source, depth);
 
-            if (!_cache.TryAdd(current.DistinguishedName, treeObject))
+            if (current is { DistinguishedName: null })
+            {
+                _index.Add(treeObject);
+                continue;
+            }
+
+            if (!_cache.TryAdd(treeObject))
             {
                 treeObject.Hierarchy += " <-> Possible Circular Reference (need to handle this later)";
                 _index.Add(treeObject);
+                current.Dispose();
                 // handle possible circular reference here
                 continue;
             }
@@ -88,7 +136,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
             {
                 using PrincipalSearchResult<Principal> search = current.GetMembers();
                 EnumerateMembers(search, source, depth);
-                _index.Add(_cache[current.DistinguishedName]);
+                _index.Add(treeObject);
                 _index.TryAddPrincipals();
                 current.Dispose();
             }
@@ -106,7 +154,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         return _index.GetTree();
     }
 
-    private static void EnumerateMembers(
+    private void EnumerateMembers(
         PrincipalSearchResult<Principal> searchResult,
         string source,
         int depth)
@@ -124,10 +172,5 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        _context?.Dispose();
-        _cache?.Clear();
-        _index?.Clear();
-    }
+    public void Dispose() => _context?.Dispose();
 }
