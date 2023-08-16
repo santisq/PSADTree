@@ -86,18 +86,8 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 
             try
             {
-                foreach (Principal member in current.GetMembers())
-                {
-                    if (member is not GroupPrincipal group)
-                    {
-                        _index.AddPrincipal(member, source, depth);
-                        member.Dispose();
-                        continue;
-                    }
-
-                    _stack.Push((depth, group));
-                }
-
+                using PrincipalSearchResult<Principal> search = current.GetMembers();
+                EnumerateMembers(search, source, depth);
                 _index.Add(_cache[current.DistinguishedName]);
                 _index.TryAddPrincipals();
                 current.Dispose();
@@ -114,6 +104,24 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         }
 
         return _index.GetTree();
+    }
+
+    private static void EnumerateMembers(
+        PrincipalSearchResult<Principal> searchResult,
+        string source,
+        int depth)
+    {
+        foreach (Principal member in searchResult)
+        {
+            if (member is not GroupPrincipal group)
+            {
+                _index.AddPrincipal(member, source, depth);
+                member.Dispose();
+                continue;
+            }
+
+            _stack.Push((depth, group));
+        }
     }
 
     public void Dispose()
