@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PSADTree;
 
@@ -31,7 +32,9 @@ internal sealed class TreeCache
         return true;
     }
 
-    internal bool TryGet(string distinguishedName, out TreeObject? principal) =>
+    internal bool TryGet(
+        string distinguishedName,
+        [NotNullWhen(true)] out TreeObject? principal) =>
         _cache.TryGetValue(distinguishedName, out principal);
 
     internal bool IsCircular(TreeObject node)
