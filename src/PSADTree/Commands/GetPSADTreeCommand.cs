@@ -12,7 +12,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 {
     private PrincipalContext? _context;
 
-    private readonly Stack<(GroupPrincipal group, TreeObject treeObject)> _stack = new();
+    private readonly Stack<(GroupPrincipal? group, TreeObject treeObject)> _stack = new();
 
     private readonly TreeCache _cache = new();
 
@@ -109,7 +109,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 
         while (_stack.Count > 0)
         {
-            (GroupPrincipal current, TreeObject treeObject) = _stack.Pop();
+            (GroupPrincipal? current, TreeObject treeObject) = _stack.Pop();
 
             if (current is { DistinguishedName: null })
             {
@@ -117,24 +117,39 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                 continue;
             }
 
-            if (!_cache.TryAdd(treeObject))
-            {
-                treeObject.Hierarchy += " <-> Possible Circular Reference (need to handle this later)";
-                _index.Add(treeObject);
-                current.Dispose();
-                // handle possible circular reference here
-                continue;
-            }
-
-            depth = treeObject.Depth + 1;
-
             try
             {
-                using PrincipalSearchResult<Principal> search = current.GetMembers();
-                EnumerateMembers(search, source, depth);
-                _index.Add(treeObject);
-                _index.TryAddPrincipals();
-                current.Dispose();
+                depth = treeObject.Depth + 1;
+
+                // if this node has been already processed
+                if (!_cache.TryAdd(treeObject))
+                {
+                    _index.Add(treeObject);
+
+                    // if it's a circular reference, go next
+                    if (_cache.IsCircular(treeObject))
+                    {
+                        treeObject.Hierarchy += " <-> Circular Reference";
+                        current?.Dispose();
+                        continue;
+                    }
+
+                    // else, reconstruct the output without querying AD again
+                    // THIS PART IS NOT WORKING I THINK (figure out later)
+                    EnumerateMembers(treeObject, depth);
+                    current?.Dispose();
+                    continue;
+                }
+
+                using PrincipalSearchResult<Principal>? search = current?.GetMembers();
+
+                if (search is not null)
+                {
+                    EnumerateMembers(treeObject, search, source, depth);
+                    _index.Add(treeObject);
+                    _index.TryAddPrincipals();
+                    current?.Dispose();
+                }
             }
             catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
             {
@@ -151,20 +166,42 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
     }
 
     private void EnumerateMembers(
+        TreeObject parent,
         PrincipalSearchResult<Principal> searchResult,
         string source,
         int depth)
     {
+        TreeObject treeObject;
         foreach (Principal member in searchResult)
         {
+            treeObject = member.ToTreeObject(source, depth);
+            parent.AddMember(treeObject);
+
             if (member is not GroupPrincipal group)
             {
-                _index.AddPrincipal(member, source, depth);
+                _index.AddPrincipal(treeObject);
                 member.Dispose();
                 continue;
             }
 
-            _stack.Push((group, group.ToTreeObject(source, depth)));
+            treeObject.AddParent(parent);
+            _stack.Push((group, treeObject));
+        }
+    }
+
+    private void EnumerateMembers(TreeObject parent, int depth)
+    {
+        // this should be changed in the future,
+        // possibly make TreeObject abstract or generic
+        foreach (TreeObject member in parent.Member)
+        {
+            if (member.ObjectClass is not "group")
+            {
+                _index.Add(member.Copy(depth));
+                continue;
+            }
+
+            _stack.Push((null, member));
         }
     }
 

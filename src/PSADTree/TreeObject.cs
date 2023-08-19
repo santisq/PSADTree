@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Security.Principal;
 
@@ -6,6 +7,20 @@ namespace PSADTree;
 
 public sealed class TreeObject
 {
+    private List<TreeObject>? _parent;
+
+    private List<TreeObject>? _member;
+
+    internal TreeObject[] Parent =>
+        _parent is not null
+        ? _parent.ToArray()
+        : Array.Empty<TreeObject>();
+
+    internal TreeObject[] Member =>
+        _member is not null
+        ? _member.ToArray()
+        : Array.Empty<TreeObject>();
+
     internal string Source { get; }
 
     internal int Depth { get; }
@@ -21,6 +36,20 @@ public sealed class TreeObject
     public Guid? ObjectGuid { get; }
 
     public SecurityIdentifier ObjectSid { get; }
+
+    private TreeObject(TreeObject treeObject, int depth)
+    {
+        Depth = treeObject.Depth;
+        Source = treeObject.Source;
+        SamAccountName = treeObject.SamAccountName;
+        ObjectClass = treeObject.ObjectClass;
+        DistinguishedName = treeObject.DistinguishedName;
+        ObjectGuid = treeObject.ObjectGuid;
+        ObjectSid = treeObject.ObjectSid;
+        Hierarchy = treeObject.SamAccountName.Indent(depth);
+        _member = treeObject._member;
+        _parent = treeObject._parent;
+    }
 
     internal TreeObject(
         string source,
@@ -50,5 +79,19 @@ public sealed class TreeObject
         Hierarchy = SamAccountName;
     }
 
+    internal void AddParent(TreeObject parent)
+    {
+        _parent ??= new();
+        _parent.Add(parent);
+    }
+
+    internal void AddMember(TreeObject member)
+    {
+        _member ??= new();
+        _member.Add(member);
+    }
+
     public override string ToString() => DistinguishedName;
+
+    internal TreeObject Copy(int depth) => new(this, depth);
 }

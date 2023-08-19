@@ -15,8 +15,7 @@ internal sealed class TreeIndex
         _output = new();
     }
 
-    internal void AddPrincipal(Principal principal, string source, int depth) =>
-        _principals.Add(principal.ToTreeObject(source, depth));
+    internal void AddPrincipal(TreeObject principal) => _principals.Add(principal);
 
     internal void Add(TreeObject principal) => _output.Add(principal);
 
