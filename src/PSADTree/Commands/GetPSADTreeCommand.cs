@@ -29,6 +29,9 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
     [Parameter]
     public string? Server { get; set; }
 
+    [Parameter]
+    public SwitchParameter ShowAll { get; set; }
+
     protected override void BeginProcessing()
     {
         try
@@ -125,19 +128,26 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                 if (!_cache.TryAdd(treeObject))
                 {
                     _index.Add(treeObject);
+                    current?.Dispose();
 
                     // if it's a circular reference, go next
                     if (_cache.IsCircular(treeObject))
                     {
                         treeObject.Hierarchy += " <-> Circular Reference";
-                        current?.Dispose();
                         continue;
                     }
 
-                    // else, reconstruct the output without querying AD again
-                    // THIS PART IS NOT WORKING I THINK (figure out later)
-                    EnumerateMembers(treeObject, depth);
-                    current?.Dispose();
+                    // else, if we want to show all nodes
+                    if (ShowAll.IsPresent)
+                    {
+                        // reconstruct the output without querying AD again
+                        treeObject.Hook(_cache[treeObject.DistinguishedName]);
+                        EnumerateMembers(treeObject, depth);
+                        continue;
+                    }
+
+                    // else, just skip this reference and go next
+                    treeObject.Hierarchy += " <-> Processed Group";
                     continue;
                 }
 
@@ -201,7 +211,7 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                 continue;
             }
 
-            _stack.Push((null, member));
+            _stack.Push((null, member.Copy(depth)));
         }
     }
 

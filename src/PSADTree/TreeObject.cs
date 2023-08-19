@@ -11,12 +11,12 @@ public sealed class TreeObject
 
     private List<TreeObject>? _member;
 
-    internal TreeObject[] Parent =>
+    public TreeObject[] Parent =>
         _parent is not null
         ? _parent.ToArray()
         : Array.Empty<TreeObject>();
 
-    internal TreeObject[] Member =>
+    public TreeObject[] Member =>
         _member is not null
         ? _member.ToArray()
         : Array.Empty<TreeObject>();
@@ -47,8 +47,7 @@ public sealed class TreeObject
         ObjectGuid = treeObject.ObjectGuid;
         ObjectSid = treeObject.ObjectSid;
         Hierarchy = treeObject.SamAccountName.Indent(depth);
-        _member = treeObject._member;
-        _parent = treeObject._parent;
+        Hook(treeObject);
     }
 
     internal TreeObject(
@@ -94,4 +93,10 @@ public sealed class TreeObject
     public override string ToString() => DistinguishedName;
 
     internal TreeObject Copy(int depth) => new(this, depth);
+
+    internal void Hook(TreeObject treeObject)
+    {
+        _member = treeObject._member;
+        _parent = treeObject._parent;
+    }
 }
