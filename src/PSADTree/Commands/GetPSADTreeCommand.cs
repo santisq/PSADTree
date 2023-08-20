@@ -185,7 +185,13 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         foreach (Principal member in searchResult)
         {
             treeObject = member.ToTreeObject(source, depth);
-            parent.AddMember(treeObject);
+
+            // we only need to add childs to the .Member property
+            // if this switch is in use, otherwise it creates overhead
+            if (ShowAll.IsPresent)
+            {
+                parent.AddMember(treeObject);
+            }
 
             if (member is not GroupPrincipal group)
             {
@@ -207,11 +213,11 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
         {
             if (member.ObjectClass is not "group")
             {
-                _index.Add(member.Copy(depth));
+                _index.Add(member.Clone(depth));
                 continue;
             }
 
-            _stack.Push((null, member.Copy(depth)));
+            _stack.Push((null, member.Clone(depth)));
         }
     }
 

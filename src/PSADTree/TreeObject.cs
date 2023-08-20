@@ -23,7 +23,7 @@ public sealed class TreeObject
 
     internal string Source { get; }
 
-    internal int Depth { get; }
+    internal int Depth { get; set; }
 
     public string SamAccountName { get; }
 
@@ -36,19 +36,6 @@ public sealed class TreeObject
     public Guid? ObjectGuid { get; }
 
     public SecurityIdentifier ObjectSid { get; }
-
-    private TreeObject(TreeObject treeObject, int depth)
-    {
-        Depth = treeObject.Depth;
-        Source = treeObject.Source;
-        SamAccountName = treeObject.SamAccountName;
-        ObjectClass = treeObject.ObjectClass;
-        DistinguishedName = treeObject.DistinguishedName;
-        ObjectGuid = treeObject.ObjectGuid;
-        ObjectSid = treeObject.ObjectSid;
-        Hierarchy = treeObject.SamAccountName.Indent(depth);
-        Hook(treeObject);
-    }
 
     internal TreeObject(
         string source,
@@ -92,7 +79,13 @@ public sealed class TreeObject
 
     public override string ToString() => DistinguishedName;
 
-    internal TreeObject Copy(int depth) => new(this, depth);
+    internal TreeObject Clone(int depth)
+    {
+        TreeObject clone = (TreeObject)MemberwiseClone();
+        clone.Depth = depth;
+        clone.Hierarchy = SamAccountName.Indent(depth);
+        return clone;
+    }
 
     internal void Hook(TreeObject treeObject)
     {
