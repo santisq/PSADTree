@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net472</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;net472</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>PSADTree</AssemblyName>
@@ -9,17 +9,17 @@
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' != 'net472' ">
     <DefineConstants>$(DefineConstants);CORE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net6.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" />
     <Reference Include="System.DirectoryServices" PrivateAssets="all" />
     <Reference Include="System.DirectoryServices.AccountManagement" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net472' ">
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" PrivateAssets="all" />
     <PackageReference Include="System.Management.Automation" Version="7.2.0" PrivateAssets="all" />
     <PackageReference Include="System.DirectoryServices" Version="6.0.0" PrivateAssets="all" />
