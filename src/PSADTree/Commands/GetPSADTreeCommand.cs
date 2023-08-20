@@ -18,6 +18,10 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 
     private readonly TreeIndex _index = new();
 
+    private const string _isCircular = " ↔ Circular Reference";
+
+    private const string _isProcessed = " ↔ Processed Group";
+
     [Parameter(
         Position = 0,
         Mandatory = true,
@@ -133,7 +137,9 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                     // if it's a circular reference, go next
                     if (_cache.IsCircular(treeObject))
                     {
-                        treeObject.Hierarchy += " <-> Circular Reference";
+                        treeObject.Hierarchy = string.Concat(
+                            treeObject.Hierarchy,
+                            _isCircular);
                         continue;
                     }
 
@@ -147,7 +153,9 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                     }
 
                     // else, just skip this reference and go next
-                    treeObject.Hierarchy += " <-> Processed Group";
+                    treeObject.Hierarchy = string.Concat(
+                        treeObject.Hierarchy,
+                        _isProcessed);
                     continue;
                 }
 
