@@ -5,10 +5,10 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-[Cmdlet(VerbsCommon.Get, "PSADTree")]
-[Alias("psadtree")]
+[Cmdlet(VerbsCommon.Get, "ADTreeGroupMember")]
+[Alias("treegroupmember")]
 [OutputType(typeof(TreeObject))]
-public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
+public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
 {
     private PrincipalContext? _context;
 
@@ -62,8 +62,8 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
 
         try
         {
-            using Principal? principal = Principal.FindByIdentity(_context, Identity);
-            if (principal is null)
+            using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
+            if (group is null)
             {
                 WriteError(new ErrorRecord(
                     new NoMatchingPrincipalException($"Cannot find an object with identity: '{Identity}'."),
@@ -74,14 +74,11 @@ public sealed class GetPSADTreeCommand : PSCmdlet, IDisposable
                 return;
             }
 
-            if (principal is GroupPrincipal group)
-            {
-                WriteObject(
-                    sendToPipeline: Traverse(
-                        groupPrincipal: group,
-                        source: group.DistinguishedName),
-                    enumerateCollection: true);
-            }
+            WriteObject(
+                sendToPipeline: Traverse(
+                    groupPrincipal: group,
+                    source: group.DistinguishedName),
+                enumerateCollection: true);
         }
         catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
         {
