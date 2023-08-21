@@ -4,9 +4,12 @@ using System.Text.RegularExpressions;
 
 namespace PSADTree;
 
-internal static class TreeExtensions
+internal static partial class TreeExtensions
 {
-    private static readonly Regex s_re = new(@"└|\S", RegexOptions.Compiled);
+    [GeneratedRegex("└|\\S", RegexOptions.Compiled)]
+    private static partial Regex Init();
+
+    private static readonly Regex s_re = Init();
 
     private static readonly StringBuilder s_sb = new();
 
@@ -20,10 +23,15 @@ internal static class TreeExtensions
             .ToString();
     }
 
-    internal static TreeObject ToTreeObject(this Principal principal, string source, int depth) =>
+    internal static TreeObject ToTreeObject(
+        this Principal principal,
+        string source,
+        int depth) =>
         new(source, principal, depth);
 
-    internal static TreeObject ToTreeObject(this Principal principal, string source) =>
+    internal static TreeObject ToTreeObject(
+        this Principal principal,
+        string source) =>
         new(source, principal);
 
     internal static TreeObject[] ConvertToTree(
