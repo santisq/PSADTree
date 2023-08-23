@@ -5,7 +5,7 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-[Cmdlet(VerbsCommon.Get, "ADTreeGroupMember")]
+[Cmdlet(VerbsCommon.Get, "ADTreeGroupMember", DefaultParameterSetName = DepthParameterSet)]
 [Alias("treegroupmember")]
 [OutputType(
     typeof(TreeGroup),
@@ -13,6 +13,10 @@ namespace PSADTree;
     typeof(TreeComputer))]
 public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
 {
+    private const string DepthParameterSet = "Depth";
+
+    private const string RecursiveParameterSet = "Recursive";
+
     private PrincipalContext? _context;
 
     private readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
@@ -45,6 +49,12 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
 
     [Parameter]
     public SwitchParameter Group { get; set; }
+
+    [Parameter(ParameterSetName = DepthParameterSet)]
+    public int Depth { get; set; } = 3;
+
+    [Parameter(ParameterSetName = RecursiveParameterSet)]
+    public SwitchParameter Recursive { get; set; }
 
     protected override void BeginProcessing()
     {
