@@ -1,15 +1,17 @@
-using System.DirectoryServices.AccountManagement;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PSADTree;
 
-internal static partial class TreeExtensions
+internal static class TreeExtensions
 {
-    [GeneratedRegex("└|\\S", RegexOptions.Compiled)]
-    private static partial Regex Init();
+    private static readonly Regex s_reBoxOrNotSpace = new(
+        @"└|\S",
+        RegexOptions.Compiled);
 
-    private static readonly Regex s_re = Init();
+    private static readonly Regex s_reDefaultNamingContext = new(
+        "(?<=,)DC=.+$",
+        RegexOptions.Compiled);
 
     private static readonly StringBuilder s_sb = new();
 
@@ -23,19 +25,11 @@ internal static partial class TreeExtensions
             .ToString();
     }
 
-    internal static TreeObject ToTreeObject(
-        this Principal principal,
-        string source,
-        int depth) =>
-        new(source, principal, depth);
+    internal static string GetDefaultNamingContext(this string distinguishedName) =>
+        s_reDefaultNamingContext.Match(distinguishedName).Value;
 
-    internal static TreeObject ToTreeObject(
-        this Principal principal,
-        string source) =>
-        new(source, principal);
-
-    internal static TreeObject[] ConvertToTree(
-        this TreeObject[] inputObject)
+    internal static TreeObjectBase[] ConvertToTree(
+        this TreeObjectBase[] inputObject)
     {
         for (int i = 0; i < inputObject.Length; i++)
         {
@@ -48,7 +42,7 @@ internal static partial class TreeExtensions
 
             int z = i - 1;
 
-            while (!s_re.IsMatch(inputObject[z].Hierarchy[index].ToString()))
+            while (!s_reBoxOrNotSpace.IsMatch(inputObject[z].Hierarchy[index].ToString()))
             {
                 char[] replace = inputObject[z].Hierarchy.ToCharArray();
                 replace[index] = '│';

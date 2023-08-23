@@ -5,57 +5,48 @@ namespace PSADTree;
 
 internal sealed class TreeCache
 {
-    private readonly Dictionary<string, TreeObject> _cache;
+    private readonly Dictionary<string, TreeGroup> _cache;
 
-    private readonly Queue<TreeObject> _queue;
-
-    internal TreeObject this[string distinguishedName] =>
+    internal TreeGroup this[string distinguishedName] =>
         _cache[distinguishedName];
 
-    internal TreeCache()
-    {
-        _cache = new();
-        _queue = new();
-    }
+    internal TreeCache() => _cache = new();
 
-    internal void Add(string distinguishedName, TreeObject principal) =>
+    internal void Add(string distinguishedName, TreeGroup principal) =>
         _cache.Add(distinguishedName, principal);
 
-    internal bool TryAdd(TreeObject treeObject)
+    internal bool TryAdd(TreeGroup group)
     {
-        if (_cache.ContainsKey(treeObject.DistinguishedName))
+        if (_cache.ContainsKey(group.DistinguishedName))
         {
             return false;
         }
 
-        _cache.Add(treeObject.DistinguishedName, treeObject);
+        _cache.Add(group.DistinguishedName, group);
         return true;
     }
 
     internal bool TryGet(
         string distinguishedName,
-        [NotNullWhen(true)] out TreeObject? principal) =>
+        [NotNullWhen(true)] out TreeGroup? principal) =>
         _cache.TryGetValue(distinguishedName, out principal);
 
-    internal bool IsCircular(TreeObject node)
+    internal static bool IsCircular(TreeGroup node)
     {
-        foreach (TreeObject parent in node.Parent)
+        if (node.Parent is null)
         {
-            _queue.Enqueue(parent);
+            return false;
         }
 
-        while (_queue.Count > 0)
+        TreeGroup? current = node.Parent;
+        while (current is not null)
         {
-            TreeObject current = _queue.Dequeue();
             if (node.DistinguishedName == current.DistinguishedName)
             {
                 return true;
             }
 
-            foreach (TreeObject parent in current.Parent)
-            {
-                _queue.Enqueue(_cache[parent.DistinguishedName]);
-            }
+            current = current.Parent;
         }
 
         return false;

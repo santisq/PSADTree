@@ -7,12 +7,15 @@ namespace PSADTree;
 
 [Cmdlet(VerbsCommon.Get, "ADTreeGroupMember")]
 [Alias("treegroupmember")]
-[OutputType(typeof(TreeObject))]
+[OutputType(
+    typeof(TreeGroup),
+    typeof(TreeUser),
+    typeof(TreeComputer))]
 public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
 {
     private PrincipalContext? _context;
 
-    private readonly Stack<(GroupPrincipal? group, TreeObject treeObject)> _stack = new();
+    private readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
 
     private readonly TreeCache _cache = new();
 
@@ -21,6 +24,10 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
     private const string _isCircular = " ↔ Circular Reference";
 
     private const string _isProcessed = " ↔ Processed Group";
+
+    private const string _vtBrightRed = "\x1B[91m";
+
+    private const string _vtReset = "\x1B[0m";
 
     [Parameter(
         Position = 0,
@@ -102,41 +109,45 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
         }
     }
 
-    private TreeObject[] Traverse(
+    private TreeObjectBase[] Traverse(
         GroupPrincipal groupPrincipal,
         string source)
     {
         int depth;
         _index.Clear();
         _cache.Clear();
-        _stack.Push((groupPrincipal, groupPrincipal.ToTreeObject(source)));
+        _stack.Push((groupPrincipal, new TreeGroup(source, groupPrincipal)));
 
         while (_stack.Count > 0)
         {
-            (GroupPrincipal? current, TreeObject treeObject) = _stack.Pop();
+            (GroupPrincipal? current, TreeGroup treeGroup) = _stack.Pop();
 
             if (current is { DistinguishedName: null })
             {
-                _index.Add(treeObject);
+                _index.Add(treeGroup);
                 continue;
             }
 
             try
             {
-                depth = treeObject.Depth + 1;
+                depth = treeGroup.Depth + 1;
 
                 // if this node has been already processed
-                if (!_cache.TryAdd(treeObject))
+                if (!_cache.TryAdd(treeGroup))
                 {
-                    _index.Add(treeObject);
+                    _index.Add(treeGroup);
                     current?.Dispose();
 
                     // if it's a circular reference, go next
-                    if (_cache.IsCircular(treeObject))
+                    if (TreeCache.IsCircular(treeGroup))
                     {
-                        treeObject.Hierarchy = string.Concat(
-                            treeObject.Hierarchy,
-                            _isCircular);
+                        treeGroup.SetCircularNested();
+                        treeGroup.Hierarchy = string.Concat(
+                            treeGroup.Hierarchy.Insert(
+                                treeGroup.Hierarchy.IndexOf("─ ") + 2,
+                                _vtBrightRed),
+                            _isCircular,
+                            _vtReset);
                         continue;
                     }
 
@@ -144,14 +155,13 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
                     if (ShowAll.IsPresent)
                     {
                         // reconstruct the output without querying AD again
-                        treeObject.Hook(_cache[treeObject.DistinguishedName]);
-                        EnumerateMembers(treeObject, depth);
+                        EnumerateMembers(treeGroup, depth);
                         continue;
                     }
 
                     // else, just skip this reference and go next
-                    treeObject.Hierarchy = string.Concat(
-                        treeObject.Hierarchy,
+                    treeGroup.Hierarchy = string.Concat(
+                        treeGroup.Hierarchy,
                         _isProcessed);
                     continue;
                 }
@@ -160,8 +170,8 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
 
                 if (search is not null)
                 {
-                    EnumerateMembers(treeObject, search, source, depth);
-                    _index.Add(treeObject);
+                    EnumerateMembers(treeGroup, search, source, depth);
+                    _index.Add(treeGroup);
                     _index.TryAddPrincipals();
                     current?.Dispose();
                 }
@@ -181,48 +191,88 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
     }
 
     private void EnumerateMembers(
-        TreeObject parent,
+        TreeGroup parent,
         PrincipalSearchResult<Principal> searchResult,
         string source,
         int depth)
     {
-        TreeObject treeObject;
         foreach (Principal member in searchResult)
         {
-            treeObject = member.ToTreeObject(source, depth);
-
-            // we only need to add childs to the .Member property
-            // if this switch is in use, otherwise it creates overhead
-            if (ShowAll.IsPresent)
+            IDisposable? disposable = null;
+            if (member is UserPrincipal or ComputerPrincipal)
             {
-                parent.AddMember(treeObject);
+                disposable = member;
             }
 
-            if (member is not GroupPrincipal group)
+            try
             {
-                _index.AddPrincipal(treeObject);
-                member.Dispose();
-                continue;
-            }
+                TreeObjectBase treeObject = ProcessPrincipal(
+                    principal: member,
+                    parent: parent,
+                    source: source,
+                    depth: depth);
 
-            treeObject.AddParent(parent);
-            _stack.Push((group, treeObject));
+                if (ShowAll.IsPresent)
+                {
+                    parent.AddMember(treeObject);
+                }
+            }
+            finally
+            {
+                disposable?.Dispose();
+            }
         }
     }
 
-    private void EnumerateMembers(TreeObject parent, int depth)
+    private TreeObjectBase ProcessPrincipal(
+        Principal principal,
+        TreeGroup parent,
+        string source,
+        int depth)
     {
-        // this should be changed in the future,
-        // possibly make TreeObject abstract or generic
-        foreach (TreeObject member in parent.Member)
+        return principal switch
         {
-            if (member.ObjectClass is not "group")
+            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
+            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
+            GroupPrincipal group => HandleGroup(parent, group, source, depth),
+            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
+        };
+
+        TreeObjectBase AddTreeObject(TreeObjectBase obj)
+        {
+            _index.AddPrincipal(obj);
+            return obj;
+        }
+
+        TreeObjectBase HandleGroup(
+            TreeGroup parent,
+            GroupPrincipal group,
+            string source,
+            int depth)
+        {
+            if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
             {
-                _index.Add(member.Clone(depth));
+                _stack.Push((group, (TreeGroup)treeGroup.Clone(parent, depth)));
+                return treeGroup;
+            }
+
+            treeGroup = new(source, parent, group, depth);
+            _stack.Push((group, treeGroup));
+            return treeGroup;
+        }
+    }
+
+    private void EnumerateMembers(TreeGroup parent, int depth)
+    {
+        foreach (TreeObjectBase member in parent.Members)
+        {
+            if (member is not TreeGroup group)
+            {
+                _index.Add(member.Clone(parent, depth));
                 continue;
             }
 
-            _stack.Push((null, member.Clone(depth)));
+            _stack.Push((null, (TreeGroup)group.Clone(parent, depth)));
         }
     }
 

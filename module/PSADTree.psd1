@@ -9,7 +9,7 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule        = if ($PSEdition -eq 'Core') {
+    RootModule         = if ($PSEdition -eq 'Core') {
         'bin/net6.0/PSADTree.dll'
     }
     else {
@@ -17,28 +17,28 @@
     }
 
     # Version number of this module.
-    ModuleVersion     = '1.1.0'
+    ModuleVersion      = '1.1.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
 
     # ID used to uniquely identify this module
-    GUID              = 'e49013dc-4106-4a95-aebc-b2669cbadeab'
+    GUID               = 'e49013dc-4106-4a95-aebc-b2669cbadeab'
 
     # Author of this module
-    Author            = 'Santiago Squarzon'
+    Author             = 'Santiago Squarzon'
 
     # Company or vendor of this module
-    CompanyName       = 'Unknown'
+    CompanyName        = 'Unknown'
 
     # Copyright statement for this module
-    Copyright         = '(c) Santiago Squarzon. All rights reserved.'
+    Copyright          = '(c) Santiago Squarzon. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description       = 'tree commands for Active Directory'
+    Description        = 'tree commands for Active Directory'
 
     # Minimum version of the PowerShell engine required by this module
-    PowerShellVersion = '5.1'
+    PowerShellVersion  = '5.1'
 
     # Name of the PowerShell host required by this module
     # PowerShellHostName = ''
@@ -68,22 +68,22 @@
     # TypesToProcess = @()
 
     # Format files (.ps1xml) to be loaded when importing this module
-    # FormatsToProcess = @()
+    FormatsToProcess   = @('PSADTree.Format.ps1xml')
 
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
     # NestedModules = @()
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-    FunctionsToExport = @()
+    FunctionsToExport  = @()
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-    CmdletsToExport   = @('Get-ADTreeGroupMember')
+    CmdletsToExport    = @('Get-ADTreeGroupMember')
 
     # Variables to export from this module
-    VariablesToExport = @()
+    VariablesToExport  = @()
 
     # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-    AliasesToExport   = @('treegroupmember')
+    AliasesToExport    = @('treegroupmember')
 
     # DSC resources to export from this module
     # DscResourcesToExport = @()
@@ -95,7 +95,7 @@
     # FileList = @()
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
-    PrivateData       = @{
+    PrivateData        = @{
 
         PSData = @{
 
