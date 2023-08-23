@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Management.Automation;
 
-namespace PSADTree;
+namespace PSADTree.Internal;
 
 #pragma warning disable IDE1006
 

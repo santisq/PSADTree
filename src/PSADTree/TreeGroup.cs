@@ -35,22 +35,12 @@ public sealed class TreeGroup : TreeObjectBase
         : base(source, parent, group, depth)
     { }
 
-    // internal void AddParent(TreeGroup parent) =>
-    //     Parent = parent;
-
     internal void SetCircularNested() => IsCircular = true;
 
     internal void AddMember(TreeObjectBase member)
     {
         _members ??= new();
         _members.Add(member);
-    }
-
-    internal void Hook(TreeGroup group)
-    {
-        _members = group._members;
-        // Parent = group.Parent;
-        // _parent ??= group._parent;
     }
 
     internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>

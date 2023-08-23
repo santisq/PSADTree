@@ -43,6 +43,9 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
     [Parameter]
     public SwitchParameter ShowAll { get; set; }
 
+    [Parameter]
+    public SwitchParameter Group { get; set; }
+
     protected override void BeginProcessing()
     {
         try
@@ -122,12 +125,6 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
         {
             (GroupPrincipal? current, TreeGroup treeGroup) = _stack.Pop();
 
-            if (current is { DistinguishedName: null })
-            {
-                _index.Add(treeGroup);
-                continue;
-            }
-
             try
             {
                 depth = treeGroup.Depth + 1;
@@ -199,13 +196,24 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
         foreach (Principal member in searchResult)
         {
             IDisposable? disposable = null;
-            if (member is UserPrincipal or ComputerPrincipal)
-            {
-                disposable = member;
-            }
-
             try
             {
+                if (member is { DistinguishedName: null })
+                {
+                    disposable = member;
+                    continue;
+                }
+
+                if (member is not GroupPrincipal)
+                {
+                    disposable = member;
+
+                    if (Group.IsPresent)
+                    {
+                        continue;
+                    }
+                }
+
                 TreeObjectBase treeObject = ProcessPrincipal(
                     principal: member,
                     parent: parent,
