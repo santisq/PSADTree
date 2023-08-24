@@ -57,8 +57,6 @@ internal static class TreeExtensions
                 current.Hierarchy = new string(replace);
             }
 
-
-
             // while (!s_reBoxOrNotSpace.IsMatch(inputObject[z].Hierarchy[index].ToString()))
             // {
             //     char[] replace = inputObject[z].Hierarchy.ToCharArray();

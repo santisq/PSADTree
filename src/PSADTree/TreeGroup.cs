@@ -37,6 +37,9 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void SetCircularNested() => IsCircular = true;
 
+    internal void Hook(TreeCache cache) =>
+        _members ??= cache[DistinguishedName]._members;
+
     internal void AddMember(TreeObjectBase member)
     {
         _members ??= new();

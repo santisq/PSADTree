@@ -142,6 +142,7 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
                 // if this node has been already processed
                 if (!_cache.TryAdd(treeGroup))
                 {
+                    treeGroup.Hook(_cache);
                     _index.Add(treeGroup);
                     current?.Dispose();
 
