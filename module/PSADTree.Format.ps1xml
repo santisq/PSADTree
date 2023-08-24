@@ -12,11 +12,11 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <TableColumnHeader>
+          <!--<TableColumnHeader>
             <Label>SamAccountName</Label>
-            <!--<Width>20</Width>-->
+            <Width>20</Width>
             <Alignment>Left</Alignment>
-          </TableColumnHeader>
+          </TableColumnHeader>-->
           <TableColumnHeader>
             <Label>Domain</Label>
             <!--<Width>14</Width>-->
@@ -35,9 +35,9 @@
         <TableRowEntries>
           <TableRowEntry>
             <TableColumnItems>
-              <TableColumnItem>
+              <!--<TableColumnItem>
                 <PropertyName>SamAccountName</PropertyName>
-              </TableColumnItem>
+              </TableColumnItem>-->
               <TableColumnItem>
                 <ScriptBlock>$_.Domain -replace '^DC=|(?&lt;!\\),.+'</ScriptBlock>
               </TableColumnItem>
