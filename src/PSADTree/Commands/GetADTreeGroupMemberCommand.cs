@@ -142,9 +142,9 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
                 // if this node has been already processed
                 if (!_cache.TryAdd(treeGroup))
                 {
+                    current?.Dispose();
                     treeGroup.Hook(_cache);
                     _index.Add(treeGroup);
-                    current?.Dispose();
 
                     // if it's a circular reference, go next
                     if (TreeCache.IsCircular(treeGroup))
@@ -179,10 +179,11 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
                 if (search is not null)
                 {
                     EnumerateMembers(treeGroup, search, source, depth);
-                    _index.Add(treeGroup);
-                    _index.TryAddPrincipals();
-                    current?.Dispose();
                 }
+
+                _index.Add(treeGroup);
+                _index.TryAddPrincipals();
+                current?.Dispose();
             }
             catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
             {
@@ -271,12 +272,12 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
         {
             if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
             {
-                _stack.Push((group, (TreeGroup)treeGroup.Clone(parent, depth)));
+                Push(group, (TreeGroup)treeGroup.Clone(parent, depth));
                 return treeGroup;
             }
 
             treeGroup = new(source, parent, group, depth);
-            _stack.Push((group, treeGroup));
+            Push(group, treeGroup);
             return treeGroup;
         }
     }
@@ -291,7 +292,15 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
                 continue;
             }
 
-            _stack.Push((null, (TreeGroup)group.Clone(parent, depth)));
+            Push(null, (TreeGroup)group.Clone(parent, depth));
+        }
+    }
+
+    private void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
+    {
+        if (Recursive.IsPresent || treeGroup.Depth <= Depth)
+        {
+            _stack.Push((groupPrincipal, treeGroup));
         }
     }
 
