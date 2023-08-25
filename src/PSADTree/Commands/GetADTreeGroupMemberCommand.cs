@@ -205,7 +205,6 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
         string source,
         int depth)
     {
-        bool shouldProcess = Recursive.IsPresent || depth <= Depth;
         foreach (Principal member in searchResult)
         {
             IDisposable? disposable = null;
@@ -221,7 +220,7 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
                 {
                     disposable = member;
 
-                    if (Group.IsPresent || !shouldProcess)
+                    if (Group.IsPresent)
                     {
                         continue;
                     }
@@ -261,7 +260,11 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
 
         TreeObjectBase AddTreeObject(TreeObjectBase obj)
         {
-            _index.AddPrincipal(obj);
+            if (Recursive.IsPresent || depth <= Depth)
+            {
+                _index.AddPrincipal(obj);
+            }
+
             return obj;
         }
 
