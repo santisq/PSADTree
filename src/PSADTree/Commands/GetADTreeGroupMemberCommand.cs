@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
 
@@ -11,69 +10,13 @@ namespace PSADTree;
     typeof(TreeGroup),
     typeof(TreeUser),
     typeof(TreeComputer))]
-public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
+public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
 {
-    private const string DepthParameterSet = "Depth";
-
-    private const string RecursiveParameterSet = "Recursive";
-
-    private PrincipalContext? _context;
-
-    private readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
-
-    private readonly TreeCache _cache = new();
-
-    private readonly TreeIndex _index = new();
-
-    private const string _isCircular = " ↔ Circular Reference";
-
-    private const string _isProcessed = " ↔ Processed Group";
-
-    private const string _vtBrightRed = "\x1B[91m";
-
-    private const string _vtReset = "\x1B[0m";
-
-    [Parameter(
-        Position = 0,
-        Mandatory = true,
-        ValueFromPipeline = true,
-        ValueFromPipelineByPropertyName = true)]
-    [Alias("DistinguishedName")]
-    public string? Identity { get; set; }
-
-    [Parameter]
-    public string? Server { get; set; }
-
     [Parameter]
     public SwitchParameter ShowAll { get; set; }
 
     [Parameter]
     public SwitchParameter Group { get; set; }
-
-    [Parameter(ParameterSetName = DepthParameterSet)]
-    public int Depth { get; set; } = 3;
-
-    [Parameter(ParameterSetName = RecursiveParameterSet)]
-    public SwitchParameter Recursive { get; set; }
-
-    protected override void BeginProcessing()
-    {
-        try
-        {
-            if (Server is null)
-            {
-                _context = new PrincipalContext(ContextType.Domain);
-                return;
-            }
-
-            _context = new PrincipalContext(ContextType.Domain, Server);
-        }
-        catch (Exception e)
-        {
-            ThrowTerminatingError(new ErrorRecord(
-                e, "SetPrincipalContext", ErrorCategory.ConnectionError, null));
-        }
-    }
 
     protected override void ProcessRecord()
     {
@@ -295,14 +238,4 @@ public sealed class GetADTreeGroupMemberCommand : PSCmdlet, IDisposable
             Push(null, (TreeGroup)group.Clone(parent, depth));
         }
     }
-
-    private void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
-    {
-        if (Recursive.IsPresent || treeGroup.Depth <= Depth)
-        {
-            _stack.Push((groupPrincipal, treeGroup));
-        }
-    }
-
-    public void Dispose() => _context?.Dispose();
 }
