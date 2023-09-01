@@ -10,7 +10,7 @@ namespace PSADTree;
     typeof(TreeGroup),
     typeof(TreeUser),
     typeof(TreeComputer))]
-public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
+public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 {
     [Parameter]
     public SwitchParameter ShowAll { get; set; }
@@ -28,12 +28,7 @@ public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
             using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
             if (group is null)
             {
-                WriteError(new ErrorRecord(
-                    new NoMatchingPrincipalException($"Cannot find an object with identity: '{Identity}'."),
-                    "IdentityNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    Identity));
-
+                WriteError(ErrorHelper.IdentityNotFound(Identity));
                 return;
             }
 
@@ -49,19 +44,11 @@ public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
         }
         catch (MultipleMatchesException e)
         {
-            WriteError(new ErrorRecord(
-                e,
-                "AmbiguousIdentity",
-                ErrorCategory.InvalidResult,
-                Identity));
+            WriteError(ErrorHelper.AmbiguousIdentity(Identity, e));
         }
         catch (Exception e)
         {
-            WriteError(new ErrorRecord(
-                e,
-                "Unspecified",
-                ErrorCategory.NotSpecified,
-                Identity));
+            WriteError(ErrorHelper.Unspecified(Identity, e));
         }
     }
 
@@ -134,8 +121,7 @@ public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
             }
             catch (Exception e)
             {
-                WriteError(new ErrorRecord(
-                    e, "EnumerationError", ErrorCategory.NotSpecified, current));
+                WriteError(ErrorHelper.EnumerationFailure(current, e));
             }
         }
 

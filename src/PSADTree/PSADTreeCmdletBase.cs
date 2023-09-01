@@ -5,7 +5,7 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-public abstract class ADTreeCmdletBase : PSCmdlet, IDisposable
+public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 {
     protected const string DepthParameterSet = "Depth";
 
