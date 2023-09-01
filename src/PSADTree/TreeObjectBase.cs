@@ -28,7 +28,7 @@ public abstract class TreeObjectBase
 
     protected TreeObjectBase(
         TreeObjectBase treeObject,
-        TreeGroup parent,
+        TreeGroup? parent,
         int depth)
     {
         Depth = depth;
@@ -59,7 +59,7 @@ public abstract class TreeObjectBase
 
     protected TreeObjectBase(
         string source,
-        TreeGroup parent,
+        TreeGroup? parent,
         Principal principal,
         int depth)
     {

@@ -10,7 +10,7 @@ public sealed class TreeComputer : TreeObjectBase
 
     internal TreeComputer(
         string source,
-        TreeGroup parent,
+        TreeGroup? parent,
         ComputerPrincipal computer,
         int depth)
         : base(source, parent, computer, depth)

@@ -10,7 +10,7 @@ public sealed class TreeUser : TreeObjectBase
 
     internal TreeUser(
         string source,
-        TreeGroup parent,
+        TreeGroup? parent,
         UserPrincipal user,
         int depth)
         : base(source, parent, user, depth)

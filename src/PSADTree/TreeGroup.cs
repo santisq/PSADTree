@@ -6,6 +6,14 @@ namespace PSADTree;
 
 public sealed class TreeGroup : TreeObjectBase
 {
+    private const string _isCircular = " ↔ Circular Reference";
+
+    private const string _isProcessed = " ↔ Processed Group";
+
+    private const string _vtBrightRed = "\x1B[91m";
+
+    private const string _vtReset = "\x1B[0m";
+
     private List<TreeObjectBase>? _members;
 
     public ReadOnlyCollection<TreeObjectBase> Members => new(_members ??= new());
@@ -29,13 +37,25 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal TreeGroup(
         string source,
-        TreeGroup parent,
+        TreeGroup? parent,
         GroupPrincipal group,
         int depth)
         : base(source, parent, group, depth)
     { }
 
-    internal void SetCircularNested() => IsCircular = true;
+    internal void SetCircularNested()
+    {
+        IsCircular = true;
+        Hierarchy = string.Concat(
+            Hierarchy.Insert(
+                Hierarchy.IndexOf("─ ") + 2,
+                _vtBrightRed),
+            _isCircular,
+            _vtReset);
+    }
+
+    internal void SetProcessed() =>
+        Hierarchy = string.Concat(Hierarchy, _isProcessed);
 
     internal void Hook(TreeCache cache) =>
         _members ??= cache[DistinguishedName]._members;

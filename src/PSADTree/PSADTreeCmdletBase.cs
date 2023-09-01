@@ -21,14 +21,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     internal readonly TreeIndex _index = new();
 
-    protected const string _isCircular = " ↔ Circular Reference";
-
-    protected const string _isProcessed = " ↔ Processed Group";
-
-    protected const string _vtBrightRed = "\x1B[91m";
-
-    protected const string _vtReset = "\x1B[0m";
-
     [Parameter(
         Position = 0,
         Mandatory = true,
@@ -80,6 +72,12 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             _context?.Dispose();
             _disposed = true;
         }
+    }
+
+    protected void Clear()
+    {
+        _index.Clear();
+        _cache.Clear();
     }
 
     public void Dispose()

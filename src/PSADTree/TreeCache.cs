@@ -12,8 +12,8 @@ internal sealed class TreeCache
 
     internal TreeCache() => _cache = new();
 
-    internal void Add(string distinguishedName, TreeGroup principal) =>
-        _cache.Add(distinguishedName, principal);
+    internal void Add(TreeGroup treeGroup) =>
+        _cache.Add(treeGroup.DistinguishedName, treeGroup);
 
     internal bool TryAdd(TreeGroup group)
     {

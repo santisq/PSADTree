@@ -57,9 +57,8 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         string source)
     {
         int depth;
-        _index.Clear();
-        _cache.Clear();
-        _stack.Push((groupPrincipal, new TreeGroup(source, groupPrincipal)));
+        Clear();
+        Push(groupPrincipal, new TreeGroup(source, groupPrincipal));
 
         while (_stack.Count > 0)
         {
@@ -80,12 +79,6 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     if (TreeCache.IsCircular(treeGroup))
                     {
                         treeGroup.SetCircularNested();
-                        treeGroup.Hierarchy = string.Concat(
-                            treeGroup.Hierarchy.Insert(
-                                treeGroup.Hierarchy.IndexOf("─ ") + 2,
-                                _vtBrightRed),
-                            _isCircular,
-                            _vtReset);
                         continue;
                     }
 
@@ -98,9 +91,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     }
 
                     // else, just skip this reference and go next
-                    treeGroup.Hierarchy = string.Concat(
-                        treeGroup.Hierarchy,
-                        _isProcessed);
+                    treeGroup.SetProcessed();
                     continue;
                 }
 
