@@ -203,7 +203,11 @@ public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
 
         TreeObjectBase AddTreeObject(TreeObjectBase obj)
         {
-            _index.AddPrincipal(obj);
+            if (Recursive.IsPresent || depth <= Depth)
+            {
+                _index.AddPrincipal(obj);
+            }
+
             return obj;
         }
 
@@ -227,15 +231,19 @@ public sealed class GetADTreeGroupMemberCommand : ADTreeCmdletBase
 
     private void EnumerateMembers(TreeGroup parent, int depth)
     {
+        bool shouldProcess = Recursive.IsPresent || depth <= Depth;
         foreach (TreeObjectBase member in parent.Members)
         {
-            if (member is not TreeGroup group)
+            if (member is TreeGroup treeGroup)
             {
-                _index.Add(member.Clone(parent, depth));
+                Push(null, (TreeGroup)treeGroup.Clone(parent, depth));
                 continue;
             }
 
-            Push(null, (TreeGroup)group.Clone(parent, depth));
+            if (shouldProcess)
+            {
+                _index.Add(member.Clone(parent, depth));
+            }
         }
     }
 }
