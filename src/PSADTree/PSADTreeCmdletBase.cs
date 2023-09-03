@@ -38,6 +38,9 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     [Parameter(ParameterSetName = RecursiveParameterSet)]
     public SwitchParameter Recursive { get; set; }
 
+    [Parameter]
+    public SwitchParameter ShowAll { get; set; }
+
     protected override void BeginProcessing()
     {
         try

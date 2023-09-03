@@ -4,7 +4,10 @@ namespace PSADTree;
 
 public sealed class TreeUser : TreeObjectBase
 {
-    private TreeUser(TreeUser user, TreeGroup parent, int depth)
+    private TreeUser(
+        TreeUser user,
+        TreeGroup parent,
+        int depth)
         : base(user, parent, depth)
     { }
 
@@ -14,6 +17,12 @@ public sealed class TreeUser : TreeObjectBase
         UserPrincipal user,
         int depth)
         : base(source, parent, user, depth)
+    { }
+
+    internal TreeUser(
+        string source,
+        UserPrincipal user)
+        : base(source, user)
     { }
 
     internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>

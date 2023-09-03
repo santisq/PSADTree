@@ -4,7 +4,10 @@ namespace PSADTree;
 
 public sealed class TreeComputer : TreeObjectBase
 {
-    private TreeComputer(TreeComputer computer, TreeGroup parent, int depth)
+    private TreeComputer(
+        TreeComputer computer,
+        TreeGroup parent,
+        int depth)
         : base(computer, parent, depth)
     { }
 
@@ -14,6 +17,12 @@ public sealed class TreeComputer : TreeObjectBase
         ComputerPrincipal computer,
         int depth)
         : base(source, parent, computer, depth)
+    { }
+
+    internal TreeComputer(
+        string source,
+        ComputerPrincipal computer)
+        : base(source, computer)
     { }
 
     internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>

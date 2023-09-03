@@ -5,7 +5,9 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-[Cmdlet(VerbsCommon.Get, "ADTreePrincipalGroupMembership")]
+[Cmdlet(
+    VerbsCommon.Get, "ADTreePrincipalGroupMembership",
+    DefaultParameterSetName = DepthParameterSet)]
 [Alias("treeprincipalmembership")]
 [OutputType(
     typeof(TreeGroup),
@@ -49,17 +51,17 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         switch (principal)
         {
             case UserPrincipal user:
-                _index.Add(new TreeUser(source, null, user, 0));
+                _index.Add(new TreeUser(source, user));
+                break;
+
+            case ComputerPrincipal computer:
+                _index.Add(new TreeComputer(source, computer));
                 break;
 
             case GroupPrincipal group:
                 TreeGroup treeGroup = new(source, group);
                 _index.Add(treeGroup);
                 _cache.Add(treeGroup);
-                break;
-
-            case ComputerPrincipal computer:
-                _index.Add(new TreeComputer(source, null, computer, 0));
                 break;
 
             default:
@@ -72,7 +74,6 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             foreach (GroupPrincipal parent in search.Cast<GroupPrincipal>())
             {
                 TreeGroup treeGroup = new(source, null, parent, 1);
-                _cache.Add(treeGroup);
                 Push(parent, treeGroup);
             }
         }
@@ -94,9 +95,106 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             enumerateCollection: true);
     }
 
-    private object? Traverse(string source)
+    private TreeObjectBase[] Traverse(string source)
     {
-        int depth = 1;
-        return default;
+        int depth;
+        while (_stack.Count > 0)
+        {
+            (GroupPrincipal? current, TreeGroup treeGroup) = _stack.Pop();
+
+            try
+            {
+                depth = treeGroup.Depth + 1;
+
+                // if this node has been already processed
+                if (!_cache.TryAdd(treeGroup))
+                {
+                    current?.Dispose();
+                    treeGroup.Hook(_cache);
+                    _index.Add(treeGroup);
+
+                    // if it's a circular reference, go next
+                    if (TreeCache.IsCircular(treeGroup))
+                    {
+                        treeGroup.SetCircularNested();
+                        continue;
+                    }
+
+                    // else, if we want to show all nodes
+                    if (ShowAll.IsPresent)
+                    {
+                        // reconstruct the output without querying AD again
+                        EnumerateMembership(treeGroup, depth);
+                        continue;
+                    }
+
+                    // else, just skip this reference and go next
+                    treeGroup.SetProcessed();
+                    continue;
+                }
+
+                using PrincipalSearchResult<Principal>? search = current?.GetGroups();
+
+                if (search is not null)
+                {
+                    EnumerateMembership(treeGroup, search, source, depth);
+                }
+
+                _index.Add(treeGroup);
+                current?.Dispose();
+            }
+            catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                WriteError(ErrorHelper.EnumerationFailure(current, e));
+            }
+        }
+
+        return _index.GetTree();
+    }
+
+    private void EnumerateMembership(
+        TreeGroup parent,
+        PrincipalSearchResult<Principal> searchResult,
+        string source,
+        int depth)
+    {
+        foreach (GroupPrincipal group in searchResult.Cast<GroupPrincipal>())
+        {
+            TreeGroup treeGroup = ProcessGroup(group);
+            if (ShowAll.IsPresent)
+            {
+                parent.AddMember(treeGroup);
+            }
+        }
+
+        TreeGroup ProcessGroup(GroupPrincipal group)
+        {
+            if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+            {
+                Push(group, (TreeGroup)treeGroup.Clone(parent, depth));
+                return treeGroup;
+            }
+
+            treeGroup = new(source, parent, group, depth);
+            Push(group, treeGroup);
+            return treeGroup;
+        }
+    }
+
+    private void EnumerateMembership(TreeGroup parent, int depth)
+    {
+        if (!Recursive.IsPresent && depth > Depth)
+        {
+            return;
+        }
+
+        foreach (TreeGroup group in parent.Members.Cast<TreeGroup>())
+        {
+            Push(null, (TreeGroup)group.Clone(parent, depth));
+        }
     }
 }

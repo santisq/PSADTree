@@ -4,7 +4,9 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-[Cmdlet(VerbsCommon.Get, "ADTreeGroupMember", DefaultParameterSetName = DepthParameterSet)]
+[Cmdlet(
+    VerbsCommon.Get, "ADTreeGroupMember",
+    DefaultParameterSetName = DepthParameterSet)]
 [Alias("treegroupmember")]
 [OutputType(
     typeof(TreeGroup),
@@ -12,9 +14,6 @@ namespace PSADTree;
     typeof(TreeComputer))]
 public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 {
-    [Parameter]
-    public SwitchParameter ShowAll { get; set; }
-
     [Parameter]
     public SwitchParameter Group { get; set; }
 
