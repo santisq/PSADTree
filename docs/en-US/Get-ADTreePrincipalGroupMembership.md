@@ -76,7 +76,7 @@ PS ..\PSADTree\> Get-ADTreePrincipalGroupMembership john.doe -Server otherDomain
 PS ..\PSADTree\> Get-ADTreePrincipalGroupMembership john.doe -ShowAll
 ```
 
-By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.
+By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
 The `-ShowAll` switch determines that, the hierarchy of previously processed groups should be displayed for the specified principal.
 
 __NOTE:__ The use of this switch should not infer in a great performance cost, for more details see the parameter details.
@@ -169,12 +169,12 @@ Accept wildcard characters: False
 
 ### -ShowAll
 
-By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.
-This switch determines that this cmdlet should display the hierarchy of previously processed groups for the specified principal.
+By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
+This switch forces the cmdlet to display the full hierarchy including previously processed groups.
 
-> __NOTE:__ This cmdlet uses a caching mechanism to ensure that Active Directory Groups are queried only once per Identity.
-This chaching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not infering in a great performance cost.
-The intent behind this switch is as to not clotter the cmdlet's output by default.
+> __NOTE:__ This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.  
+This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.  
+The intent behind this switch is to not clutter the cmdlet's output by default.
 
 ```yaml
 Type: SwitchParameter
