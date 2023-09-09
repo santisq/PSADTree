@@ -54,7 +54,7 @@ PS ..\PSADTree\> Get-ADComputer -Filter * -SearchBase 'OU=myOU,DC=myDomain,DC=co
     Get-ADTreePrincipalGroupMembership
 ```
 
-You can pipe strings containing an identity to this cmdlet. [`ADObject`](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adobject?view=activedirectory-management-10.0) instances piped to this cmdlet are also supported.
+You can pipe strings containing an identity to this cmdlet. [__`ADObject`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adobject?view=activedirectory-management-10.0) instances piped to this cmdlet are also supported.
 
 ### Example 4: Find any Circular Nested Groups from previous example
 
@@ -77,7 +77,7 @@ PS ..\PSADTree\> Get-ADTreePrincipalGroupMembership john.doe -ShowAll
 ```
 
 By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
-The `-ShowAll` switch determines that, the hierarchy of previously processed groups should be displayed for the specified principal.
+The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of all previously processed groups.
 
 __NOTE:__ The use of this switch should not infer in a great performance cost, for more details see the parameter details.
 
@@ -85,8 +85,8 @@ __NOTE:__ The use of this switch should not infer in a great performance cost, f
 
 ### -Depth
 
-Determines the number of group membership levels that are included in the recursion.
-By default, only 3 levels of recursion are included in the default view.
+Determines the number of nested group memberships included in the recursion.  
+By default, only 3 levels of recursion are included.
 
 ```yaml
 Type: Int32
@@ -126,7 +126,7 @@ Accept wildcard characters: False
 
 ### -Recursive
 
-Specifies that the cmdlet should get all group membership of a principal.
+Specifies that the cmdlet should get all group membership of the specified principal.
 
 ```yaml
 Type: SwitchParameter
