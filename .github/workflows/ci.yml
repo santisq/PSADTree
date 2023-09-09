@@ -58,9 +58,6 @@ jobs:
         - name: PS-7-Windows
           psversion: '7'
           os: windows-latest
-        - name: PS-7-Linux
-          psversion: '7'
-          os: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
