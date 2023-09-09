@@ -17,7 +17,7 @@
     }
 
     # Version number of this module.
-    ModuleVersion      = '1.1.0'
+    ModuleVersion      = '1.1.1'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -106,7 +106,17 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            # Tags = @()
+            Tags = @(
+                'tree'
+                'csharp'
+                'powershell'
+                'pwsh'
+                'active-directory'
+                'recursion'
+                'hierarchy'
+                'tree-structure'
+                'activedirectory'
+            )
 
             # A URL to the license for this module.
             LicenseUri = 'https://github.com/santisq/PSADTree/blob/main/LICENSE'
