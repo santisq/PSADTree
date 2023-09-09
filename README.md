@@ -187,7 +187,7 @@ ChildDomain          group     └── Users
 ### Get the user principal membership recursively and display all processed groups
 
 ```powershell
-Get-ADTreePrincipalGroupMembership TestUser002 -Recursive -ShowAll
+PS ..\PSADTree> Get-ADTreePrincipalGroupMembership TestUser002 -Recursive -ShowAll
 
    Source: CN=TestUser002,OU=Operations,DC=ChildDomain,DC=ParentDomain,DC=myDomain,DC=xyz
 
