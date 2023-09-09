@@ -16,7 +16,7 @@ schema: 2.0.0
 ### Depth (Default)
 
 ```powershell
-Get-ADTreePrincipalGroupMembership [-Identity] <String> [-Server <String>] [-Depth <Int32>] [-ShowAll]
+Get-ADTreePrincipalGroupMembership [-Identity] <String> [-Server <String>] [-Depth <UInt32>] [-ShowAll]
  [<CommonParameters>]
 ```
 
@@ -89,7 +89,7 @@ Determines the number of nested group memberships included in the recursion.
 By default, only 3 levels of recursion are included.
 
 ```yaml
-Type: Int32
+Type: UInt32
 Parameter Sets: Depth
 Aliases:
 

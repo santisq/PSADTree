@@ -167,7 +167,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             TreeGroup treeGroup = ProcessGroup(group);
             if (ShowAll.IsPresent)
             {
-                parent.AddMember(treeGroup);
+                parent.AddChild(treeGroup);
             }
         }
 
@@ -192,7 +192,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             return;
         }
 
-        foreach (TreeGroup group in parent.Members.Cast<TreeGroup>())
+        foreach (TreeGroup group in parent.Childs.Cast<TreeGroup>())
         {
             Push(null, (TreeGroup)group.Clone(parent, depth));
         }

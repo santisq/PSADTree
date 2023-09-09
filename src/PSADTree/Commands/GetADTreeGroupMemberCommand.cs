@@ -153,7 +153,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
                 if (ShowAll.IsPresent)
                 {
-                    parent.AddMember(treeObject);
+                    parent.AddChild(treeObject);
                 }
             }
             finally
@@ -208,7 +208,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     private void EnumerateMembers(TreeGroup parent, int depth)
     {
         bool shouldProcess = Recursive.IsPresent || depth <= Depth;
-        foreach (TreeObjectBase member in parent.Members)
+        foreach (TreeObjectBase member in parent.Childs)
         {
             if (member is TreeGroup treeGroup)
             {

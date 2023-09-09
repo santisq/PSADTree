@@ -24,6 +24,12 @@ public abstract class TreeObjectBase
 
     public Guid? ObjectGuid { get; }
 
+    public string UserPrincipalName { get; }
+
+    public string Description { get; }
+
+    public string DisplayName { get; }
+
     public SecurityIdentifier ObjectSid { get; }
 
     protected TreeObjectBase(
@@ -41,6 +47,9 @@ public abstract class TreeObjectBase
         ObjectSid = treeObject.ObjectSid;
         Hierarchy = treeObject.SamAccountName.Indent(depth);
         Parent = parent;
+        UserPrincipalName = treeObject.UserPrincipalName;
+        Description = treeObject.Description;
+        DisplayName = treeObject.DisplayName;
     }
 
     protected TreeObjectBase(
@@ -55,6 +64,9 @@ public abstract class TreeObjectBase
         ObjectGuid = principal.Guid;
         ObjectSid = principal.Sid;
         Hierarchy = SamAccountName;
+        UserPrincipalName = principal.UserPrincipalName;
+        Description = principal.Description;
+        DisplayName = principal.DisplayName;
     }
 
     protected TreeObjectBase(
@@ -62,15 +74,9 @@ public abstract class TreeObjectBase
         TreeGroup? parent,
         Principal principal,
         int depth)
+        : this(source, principal)
     {
         Depth = depth;
-        Source = source;
-        Domain = principal.DistinguishedName.GetDefaultNamingContext();
-        SamAccountName = principal.SamAccountName;
-        ObjectClass = principal.StructuralObjectClass;
-        DistinguishedName = principal.DistinguishedName;
-        ObjectGuid = principal.Guid;
-        ObjectSid = principal.Sid;
         Hierarchy = principal.SamAccountName.Indent(depth);
         Parent = parent;
     }
