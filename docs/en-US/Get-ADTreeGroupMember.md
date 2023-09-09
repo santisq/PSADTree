@@ -226,4 +226,6 @@ You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](http
 
 ## NOTES
 
+`treegroupmember` is the alias for this cmdlet.
+
 ## RELATED LINKS

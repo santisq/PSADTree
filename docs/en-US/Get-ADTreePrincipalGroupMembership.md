@@ -208,4 +208,6 @@ You can pipe strings containing an identity to this cmdlet. [`ADObject`](https:/
 
 ## NOTES
 
+`treeprincipalmembership` is the alias for this cmdlet.
+
 ## RELATED LINKS
