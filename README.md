@@ -13,8 +13,8 @@
 PSADTree is a PowerShell Module with cmdlets that emulate the [`tree` command](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/tree) for Active Directory Principals.  
 This Module currently includes two cmdlets:
 
-- [Get-ADTreeGroupMember](Get-ADTreeGroupMember.md) for AD Group Members.
-- [Get-ADTreePrincipalGroupMembership](Get-ADTreePrincipalGroupMembership.md) for AD Principal Group Membership.
+- [Get-ADTreeGroupMember](docs/en-US/Get-ADTreeGroupMember.md) for AD Group Members.
+- [Get-ADTreePrincipalGroupMembership](docs/en-US/Get-ADTreePrincipalGroupMembership.md) for AD Principal Group Membership.
 
 __Both cmdlets help with discovery of Circular Nested Groups.__
 
