@@ -202,7 +202,7 @@ Accept wildcard characters: False
 By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
 This switch forces the cmdlet to display the full hierarchy including previously processed groups.
 
-> [NOTE!]
+> [!NOTE]
 >
 > This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.  
 > This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.  
