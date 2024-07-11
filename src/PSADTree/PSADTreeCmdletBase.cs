@@ -33,7 +33,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string? Server { get; set; }
 
     [Parameter(ParameterSetName = DepthParameterSet)]
-    public uint Depth { get; set; } = 3;
+    [ValidateRange(0, int.MaxValue)]
+    public int Depth { get; set; } = 3;
 
     [Parameter(ParameterSetName = RecursiveParameterSet)]
     public SwitchParameter Recursive { get; set; }

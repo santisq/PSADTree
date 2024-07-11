@@ -7,7 +7,6 @@
 #
 
 @{
-
     # Script module or binary module file associated with this manifest.
     RootModule         = if ($PSEdition -eq 'Core') {
         'bin/net6.0/PSADTree.dll'
@@ -17,7 +16,7 @@
     }
 
     # Version number of this module.
-    ModuleVersion      = '1.1.2'
+    ModuleVersion      = '1.1.3'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -102,9 +101,7 @@
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
     PrivateData        = @{
-
         PSData = @{
-
             # Tags applied to this module. These help with module discovery in online galleries.
             Tags = @(
                 'tree'

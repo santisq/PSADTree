@@ -16,15 +16,23 @@ schema: 2.0.0
 ### Depth (Default)
 
 ```powershell
-Get-ADTreePrincipalGroupMembership [-Identity] <String> [-Server <String>] [-Depth <UInt32>] [-ShowAll]
- [<CommonParameters>]
+Get-ADTreePrincipalGroupMembership
+    [-Identity] <String>
+    [-Server <String>]
+    [-Depth <Int32>]
+    [-ShowAll]
+    [<CommonParameters>]
 ```
 
 ### Recursive
 
 ```powershell
-Get-ADTreePrincipalGroupMembership [-Identity] <String> [-Server <String>] [-Recursive] [-ShowAll]
- [<CommonParameters>]
+Get-ADTreePrincipalGroupMembership
+    [-Identity] <String>
+    [-Server <String>]
+    [-Recursive]
+    [-ShowAll]
+    [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -79,7 +87,9 @@ PS ..\PSADTree\> Get-ADTreePrincipalGroupMembership john.doe -ShowAll
 By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
 The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of all previously processed groups.
 
-__NOTE:__ The use of this switch should not infer in a great performance cost, for more details see the parameter details.
+> [!NOTE]
+>
+> The use of this switch should not infer in a great performance cost, for more details see the parameter details.
 
 ## PARAMETERS
 
@@ -89,7 +99,7 @@ Determines the number of nested group memberships included in the recursion.
 By default, only 3 levels of recursion are included.
 
 ```yaml
-Type: UInt32
+Type: Int32
 Parameter Sets: Depth
 Aliases:
 
@@ -172,9 +182,11 @@ Accept wildcard characters: False
 By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
 This switch forces the cmdlet to display the full hierarchy including previously processed groups.
 
-> __NOTE:__ This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.  
-This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.  
-The intent behind this switch is to not clutter the cmdlet's output by default.
+> [!NOTE]
+>
+> This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.  
+> This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.  
+> The intent behind this switch is to not clutter the cmdlet's output by default.
 
 ```yaml
 Type: SwitchParameter
@@ -209,5 +221,3 @@ You can pipe strings containing an identity to this cmdlet. [`ADObject`](https:/
 ## NOTES
 
 `treeprincipalmembership` is the alias for this cmdlet.
-
-## RELATED LINKS
