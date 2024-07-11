@@ -1,8 +1,8 @@
 <h1 align="center">PSADTree</h1>
 
 <div align="center">
-    <sub>Tree like cmdlets for Active Directory Principals!</sub>
-    <br /><br />
+<sub>Tree like cmdlets for Active Directory Principals!</sub>
+<br /><br />
 
 [![build](https://github.com/santisq/PSADTree/actions/workflows/ci.yml/badge.svg)](https://github.com/santisq/PSADTree/actions/workflows/ci.yml)
 [![PowerShell Gallery](https://img.shields.io/powershellgallery/v/PSADTree?label=gallery)](https://www.powershellgallery.com/packages/PSADTree)
