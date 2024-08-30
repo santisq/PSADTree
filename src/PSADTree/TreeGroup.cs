@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.DirectoryServices.AccountManagement;
+using System.Text;
 
 namespace PSADTree;
 
@@ -13,6 +15,8 @@ public sealed class TreeGroup : TreeObjectBase
     private const string _vtBrightRed = "\x1B[91m";
 
     private const string _vtReset = "\x1B[0m";
+
+    private static readonly StringBuilder s_sb = new();
 
     private List<TreeObjectBase>? _childs;
 
@@ -46,12 +50,13 @@ public sealed class TreeGroup : TreeObjectBase
     internal void SetCircularNested()
     {
         IsCircular = true;
-        Hierarchy = string.Concat(
-            Hierarchy.Insert(
-                Hierarchy.IndexOf("─ ") + 2,
-                _vtBrightRed),
-            _isCircular,
-            _vtReset);
+        Hierarchy = s_sb
+            .Append(Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, _vtBrightRed))
+            .Append(_isCircular)
+            .Append(_vtReset)
+            .ToString();
+
+        s_sb.Clear();
     }
 
     internal void SetProcessed() => Hierarchy = string.Concat(Hierarchy, _isProcessed);

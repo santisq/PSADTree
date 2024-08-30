@@ -126,16 +126,22 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         foreach (Principal member in searchResult.GetSortedEnumerable(_comparer))
         {
+            IDisposable? disposable = null;
             try
             {
                 if (member is { DistinguishedName: null })
                 {
+                    disposable = member;
                     continue;
                 }
 
-                if (Group.IsPresent && member.StructuralObjectClass != "group")
+                if (member.StructuralObjectClass != "group")
                 {
-                    continue;
+                    disposable = member;
+                    if (Group.IsPresent)
+                    {
+                        continue;
+                    }
                 }
 
                 TreeObjectBase treeObject = ProcessPrincipal(
@@ -151,7 +157,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             }
             finally
             {
-                member.Dispose();
+                disposable?.Dispose();
             }
         }
     }
