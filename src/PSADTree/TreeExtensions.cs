@@ -1,3 +1,5 @@
+using System.DirectoryServices.AccountManagement;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -57,6 +59,13 @@ internal static class TreeExtensions
 
         return inputObject;
     }
+
+    internal static IOrderedEnumerable<Principal> GetSortedEnumerable(
+        this PrincipalSearchResult<Principal> search, PSADTreeComparer comparer) =>
+        search
+            .OrderBy(static e => e.StructuralObjectClass == "group")
+            .ThenBy(static e => e, comparer);
+
 
     private static void UpdateCorner(int index, TreeObjectBase current)
     {

@@ -21,6 +21,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     internal readonly TreeIndex _index = new();
 
+    internal PSADTreeComparer _comparer = new();
+
     [Parameter(
         Position = 0,
         Mandatory = true,
@@ -54,10 +56,9 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
             _context = new PrincipalContext(ContextType.Domain, Server);
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            ThrowTerminatingError(new ErrorRecord(
-                e, "SetPrincipalContext", ErrorCategory.ConnectionError, null));
+            ThrowTerminatingError(exception.SetPrincipalContext());
         }
     }
 

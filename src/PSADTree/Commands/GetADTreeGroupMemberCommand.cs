@@ -2,7 +2,7 @@ using System;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
 
-namespace PSADTree;
+namespace PSADTree.Commands;
 
 [Cmdlet(
     VerbsCommon.Get, "ADTreeGroupMember",
@@ -43,11 +43,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
         catch (MultipleMatchesException e)
         {
-            WriteError(ErrorHelper.AmbiguousIdentity(Identity, e));
+            WriteError(e.AmbiguousIdentity(Identity));
         }
         catch (Exception e)
         {
-            WriteError(ErrorHelper.Unspecified(Identity, e));
+            WriteError(e.Unspecified(Identity));
         }
     }
 
@@ -111,7 +111,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             }
             catch (Exception e)
             {
-                WriteError(ErrorHelper.EnumerationFailure(current, e));
+                WriteError(e.EnumerationFailure(current));
             }
         }
 
@@ -124,25 +124,18 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         string source,
         int depth)
     {
-        foreach (Principal member in searchResult)
+        foreach (Principal member in searchResult.GetSortedEnumerable(_comparer))
         {
-            IDisposable? disposable = null;
             try
             {
                 if (member is { DistinguishedName: null })
                 {
-                    disposable = member;
                     continue;
                 }
 
-                if (member is not GroupPrincipal)
+                if (Group.IsPresent && member.StructuralObjectClass != "group")
                 {
-                    disposable = member;
-
-                    if (Group.IsPresent)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 TreeObjectBase treeObject = ProcessPrincipal(
@@ -158,7 +151,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             }
             finally
             {
-                disposable?.Dispose();
+                member.Dispose();
             }
         }
     }
@@ -199,7 +192,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 return treeGroup;
             }
 
-            treeGroup = new(source, parent, group, depth);
+            treeGroup = new TreeGroup(source, parent, group, depth);
             Push(group, treeGroup);
             return treeGroup;
         }

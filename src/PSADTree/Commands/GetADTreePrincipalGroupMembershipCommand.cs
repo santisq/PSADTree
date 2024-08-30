@@ -1,9 +1,8 @@
 using System;
 using System.DirectoryServices.AccountManagement;
-using System.Linq;
 using System.Management.Automation;
 
-namespace PSADTree;
+namespace PSADTree.Commands;
 
 [Cmdlet(
     VerbsCommon.Get, "ADTreePrincipalGroupMembership",
@@ -32,12 +31,12 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         }
         catch (MultipleMatchesException e)
         {
-            WriteError(ErrorHelper.AmbiguousIdentity(Identity, e));
+            WriteError(e.AmbiguousIdentity(Identity));
             return;
         }
         catch (Exception e)
         {
-            WriteError(ErrorHelper.Unspecified(Identity, e));
+            WriteError(e.Unspecified(Identity));
             return;
         }
 
@@ -71,10 +70,11 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         try
         {
             using PrincipalSearchResult<Principal> search = principal.GetGroups();
-            foreach (GroupPrincipal parent in search.Cast<GroupPrincipal>())
+            foreach (Principal parent in search)
             {
-                TreeGroup treeGroup = new(source, null, parent, 1);
-                Push(parent, treeGroup);
+                GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
+                TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
+                Push(groupPrincipal, treeGroup);
             }
         }
         catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
@@ -83,7 +83,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         }
         catch (Exception e)
         {
-            WriteError(ErrorHelper.EnumerationFailure(null, e));
+            WriteError(e.EnumerationFailure(null));
         }
         finally
         {
@@ -149,7 +149,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             }
             catch (Exception e)
             {
-                WriteError(ErrorHelper.EnumerationFailure(current, e));
+                WriteError(e.EnumerationFailure(current));
             }
         }
 
@@ -162,9 +162,9 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         string source,
         int depth)
     {
-        foreach (GroupPrincipal group in searchResult.Cast<GroupPrincipal>())
+        foreach (Principal group in searchResult)
         {
-            TreeGroup treeGroup = ProcessGroup(group);
+            TreeGroup treeGroup = ProcessGroup((GroupPrincipal)group);
             if (ShowAll.IsPresent)
             {
                 parent.AddChild(treeGroup);
@@ -192,8 +192,9 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             return;
         }
 
-        foreach (TreeGroup group in parent.Childs.Cast<TreeGroup>())
+        foreach (TreeObjectBase child in parent.Childs)
         {
+            TreeGroup group = (TreeGroup)child;
             Push(null, (TreeGroup)group.Clone(parent, depth));
         }
     }

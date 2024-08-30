@@ -16,7 +16,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private List<TreeObjectBase>? _childs;
 
-    public ReadOnlyCollection<TreeObjectBase> Childs => new(_childs ??= new());
+    public ReadOnlyCollection<TreeObjectBase> Childs => new(_childs ??= []);
 
     public bool IsCircular { get; private set; }
 
@@ -54,15 +54,13 @@ public sealed class TreeGroup : TreeObjectBase
             _vtReset);
     }
 
-    internal void SetProcessed() =>
-        Hierarchy = string.Concat(Hierarchy, _isProcessed);
+    internal void SetProcessed() => Hierarchy = string.Concat(Hierarchy, _isProcessed);
 
-    internal void Hook(TreeCache cache) =>
-        _childs ??= cache[DistinguishedName]._childs;
+    internal void Hook(TreeCache cache) => _childs ??= cache[DistinguishedName]._childs;
 
     internal void AddChild(TreeObjectBase child)
     {
-        _childs ??= new();
+        _childs ??= [];
         _childs.Add(child);
     }
 
