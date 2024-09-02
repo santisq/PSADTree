@@ -10,27 +10,24 @@ internal sealed class TreeIndex
 
     internal TreeIndex()
     {
-        _principals = new();
-        _output = new();
+        _principals = [];
+        _output = [];
     }
 
-    internal void AddPrincipal(TreeObjectBase principal) =>
-        _principals.Add(principal);
+    internal void AddPrincipal(TreeObjectBase principal) => _principals.Add(principal);
 
-    internal void Add(TreeObjectBase principal) =>
-        _output.Add(principal);
+    internal void Add(TreeObjectBase principal) => _output.Add(principal);
 
     internal void TryAddPrincipals()
     {
         if (_principals.Count > 0)
         {
-            _output.AddRange(_principals.ToArray());
+            _output.AddRange([.. _principals]);
             _principals.Clear();
         }
     }
 
-    internal TreeObjectBase[] GetTree() =>
-        _output.ToArray().ConvertToTree();
+    internal TreeObjectBase[] GetTree() => _output.ToArray().ConvertToTree();
 
     internal void Clear()
     {

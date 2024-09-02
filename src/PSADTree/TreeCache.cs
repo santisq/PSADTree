@@ -10,7 +10,7 @@ internal sealed class TreeCache
     internal TreeGroup this[string distinguishedName] =>
         _cache[distinguishedName];
 
-    internal TreeCache() => _cache = new();
+    internal TreeCache() => _cache = [];
 
     internal void Add(TreeGroup treeGroup) =>
         _cache.Add(treeGroup.DistinguishedName, treeGroup);

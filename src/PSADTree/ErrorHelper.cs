@@ -13,14 +13,15 @@ internal static class ErrorHelper
             ErrorCategory.ObjectNotFound,
             identity);
 
-    internal static ErrorRecord AmbiguousIdentity(string? identity, Exception exception) =>
+    internal static ErrorRecord AmbiguousIdentity(this Exception exception, string? identity) =>
         new(exception, "AmbiguousIdentity", ErrorCategory.InvalidResult, identity);
 
-    internal static ErrorRecord Unspecified(string? identity, Exception exception) =>
+    internal static ErrorRecord Unspecified(this Exception exception, string? identity) =>
         new(exception, "Unspecified", ErrorCategory.NotSpecified, identity);
 
-    internal static ErrorRecord EnumerationFailure(
-        GroupPrincipal? groupPrincipal,
-        Exception exception) =>
+    internal static ErrorRecord EnumerationFailure(this Exception exception, GroupPrincipal? groupPrincipal) =>
         new(exception, "EnumerationFailure", ErrorCategory.NotSpecified, groupPrincipal);
+
+    internal static ErrorRecord SetPrincipalContext(this Exception exception) =>
+        new(exception, "SetPrincipalContext", ErrorCategory.ConnectionError, null);
 }
