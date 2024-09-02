@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
+using System.Linq;
 using System.Management.Automation;
 
 namespace PSADTree;
@@ -23,11 +24,18 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     internal PSADTreeComparer _comparer = new();
 
+    protected WildcardPattern[]? _exclusionPatterns;
+
+    private const WildcardOptions _wpoptions = WildcardOptions.Compiled
+        | WildcardOptions.CultureInvariant
+        | WildcardOptions.IgnoreCase;
+
+
     [Parameter(
-        Position = 0,
-        Mandatory = true,
-        ValueFromPipeline = true,
-        ValueFromPipelineByPropertyName = true)]
+            Position = 0,
+            Mandatory = true,
+            ValueFromPipeline = true,
+            ValueFromPipelineByPropertyName = true)]
     [Alias("DistinguishedName")]
     public string? Identity { get; set; }
 
@@ -44,6 +52,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     [Parameter]
     public SwitchParameter ShowAll { get; set; }
 
+    [Parameter]
+    [SupportsWildcards]
+    public string[]? Exclude { get; set; }
+
     protected override void BeginProcessing()
     {
         try
@@ -55,6 +67,14 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             }
 
             _context = new PrincipalContext(ContextType.Domain, Server);
+
+
+            if (Exclude is not null)
+            {
+                _exclusionPatterns = Exclude
+                    .Select(e => new WildcardPattern(e, _wpoptions))
+                    .ToArray();
+            }
         }
         catch (Exception exception)
         {
@@ -68,6 +88,33 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         {
             _stack.Push((groupPrincipal, treeGroup));
         }
+    }
+
+    private static bool MatchAny(
+        Principal principal,
+        WildcardPattern[] patterns)
+    {
+        foreach (WildcardPattern pattern in patterns)
+        {
+            if (pattern.IsMatch(principal.SamAccountName))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected static bool ShouldExclude(
+        Principal principal,
+        WildcardPattern[]? patterns)
+    {
+        if (patterns is null)
+        {
+            return false;
+        }
+
+        return MatchAny(principal, patterns);
     }
 
     protected virtual void Dispose(bool disposing)

@@ -164,6 +164,11 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         foreach (Principal group in searchResult)
         {
+            if (ShouldExclude(group, _exclusionPatterns))
+            {
+                continue;
+            }
+
             TreeGroup treeGroup = ProcessGroup((GroupPrincipal)group);
             if (ShowAll.IsPresent)
             {

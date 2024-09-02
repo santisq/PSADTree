@@ -144,6 +144,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     }
                 }
 
+                if (ShouldExclude(member, _exclusionPatterns))
+                {
+                    continue;
+                }
+
                 TreeObjectBase treeObject = ProcessPrincipal(
                     principal: member,
                     parent: parent,
