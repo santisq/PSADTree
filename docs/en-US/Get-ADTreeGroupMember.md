@@ -230,7 +230,8 @@ Wildcard characters are accepted.
 
 > [!NOTE]
 >
-> Patterns are tested against the principal's `.SamAccountName` property.
+> - Patterns are tested against the principal's `.SamAccountName` property.
+> - When the matched principal is of type `group`, all child principals are also excluded from the output.
 
 ```yaml
 Type: String[]
