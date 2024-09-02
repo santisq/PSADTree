@@ -210,7 +210,7 @@ Wildcard characters are accepted.
 
 > [!NOTE]
 >
-> - Patterns are tested against the principal's `.SamAccountName` property.
+> Patterns are tested against the principal's `.SamAccountName` property.
 
 ```yaml
 Type: String[]
