@@ -21,7 +21,8 @@ Get-ADTreeGroupMember
     [-Identity] <String>
     [-Server <String>]
     [-Depth <Int32>]
-    [-ShowAll]
+    [-ShowAll
+    [-Exclude <String[]>]]
     [<CommonParameters>]
 ```
 
@@ -34,6 +35,7 @@ Get-ADTreeGroupMember
     [-Server <String>]
     [-Recursive]
     [-ShowAll]
+    [-Exclude <String[]>]
     [<CommonParameters>]
 ```
 
@@ -218,6 +220,28 @@ Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
+```
+
+### -Exclude
+
+Specifies an array of one or more string patterns to be matched as the cmdlet enumerates child principals.
+Any matching principal is excluded from the output.
+Wildcard characters are accepted.
+
+> [!NOTE]
+>
+> - Patterns are tested against the principal's `.SamAccountName` property.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: True
 ```
 
 ### CommonParameters
