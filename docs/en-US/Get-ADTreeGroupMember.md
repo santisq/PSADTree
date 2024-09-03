@@ -21,8 +21,8 @@ Get-ADTreeGroupMember
     [-Identity] <String>
     [-Server <String>]
     [-Depth <Int32>]
-    [-ShowAll
-    [-Exclude <String[]>]]
+    [-ShowAll]
+    [-Exclude <String[]>]
     [<CommonParameters>]
 ```
 
@@ -90,7 +90,7 @@ PS ..\PSADTree\> Get-ADTreeGroupMember TestGroup001 -Server otherDomain
 PS ..\PSADTree\> Get-ADTreeGroupMember TestGroup001 -ShowAll
 ```
 
-By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
+By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.
 The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of all previously processed groups.
 
 > [!NOTE]
@@ -101,7 +101,7 @@ The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of 
 
 ### -Depth
 
-Determines the number of nested groups and their members included in the recursion.  
+Determines the number of nested groups and their members included in the recursion.
 By default, only 3 levels of recursion are included.
 
 ```yaml
@@ -201,13 +201,13 @@ Accept wildcard characters: False
 
 ### -ShowAll
 
-By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
+By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.
 This switch forces the cmdlet to display the full hierarchy including previously processed groups.
 
 > [!NOTE]
 >
-> This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.  
-> This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.  
+> This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.
+> This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.
 > The intent behind this switch is to not clutter the cmdlet's output by default.
 
 ```yaml
