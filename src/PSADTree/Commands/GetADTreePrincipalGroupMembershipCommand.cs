@@ -70,8 +70,13 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         try
         {
             using PrincipalSearchResult<Principal> search = principal.GetGroups();
-            foreach (Principal parent in search)
+            foreach (Principal parent in search.GetSortedEnumerable(_comparer))
             {
+                if (ShouldExclude(parent, _exclusionPatterns))
+                {
+                    continue;
+                }
+
                 GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
                 TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
                 Push(groupPrincipal, treeGroup);
@@ -162,8 +167,13 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         string source,
         int depth)
     {
-        foreach (Principal group in searchResult)
+        foreach (Principal group in searchResult.GetSortedEnumerable(_comparer))
         {
+            if (ShouldExclude(group, _exclusionPatterns))
+            {
+                continue;
+            }
+
             TreeGroup treeGroup = ProcessGroup((GroupPrincipal)group);
             if (ShowAll.IsPresent)
             {
