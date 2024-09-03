@@ -60,6 +60,13 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         try
         {
+            if (Exclude is not null)
+            {
+                _exclusionPatterns = Exclude
+                    .Select(e => new WildcardPattern(e, _wpoptions))
+                    .ToArray();
+            }
+
             if (Server is null)
             {
                 _context = new PrincipalContext(ContextType.Domain);
@@ -67,14 +74,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             }
 
             _context = new PrincipalContext(ContextType.Domain, Server);
-
-
-            if (Exclude is not null)
-            {
-                _exclusionPatterns = Exclude
-                    .Select(e => new WildcardPattern(e, _wpoptions))
-                    .ToArray();
-            }
         }
         catch (Exception exception)
         {
