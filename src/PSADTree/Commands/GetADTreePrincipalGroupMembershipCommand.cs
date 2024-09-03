@@ -162,7 +162,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         string source,
         int depth)
     {
-        foreach (Principal group in searchResult)
+        foreach (Principal group in searchResult.GetSortedEnumerable(_comparer))
         {
             if (ShouldExclude(group, _exclusionPatterns))
             {
