@@ -72,6 +72,11 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             using PrincipalSearchResult<Principal> search = principal.GetGroups();
             foreach (Principal parent in search.GetSortedEnumerable(_comparer))
             {
+                if (ShouldExclude(parent, _exclusionPatterns))
+                {
+                    continue;
+                }
+
                 GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
                 TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
                 Push(groupPrincipal, treeGroup);
