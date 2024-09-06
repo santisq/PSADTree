@@ -25,18 +25,18 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         {
             principal = Principal.FindByIdentity(_context, Identity);
         }
-        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
             throw;
         }
-        catch (MultipleMatchesException e)
+        catch (MultipleMatchesException exception)
         {
-            WriteError(e.AmbiguousIdentity(Identity));
+            WriteError(exception.AmbiguousIdentity(Identity));
             return;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            WriteError(e.Unspecified(Identity));
+            WriteError(exception.Unspecified(Identity));
             return;
         }
 
@@ -82,22 +82,23 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                 Push(groupPrincipal, treeGroup);
             }
         }
-        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
             throw;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            WriteError(e.EnumerationFailure(null));
+            WriteError(exception.EnumerationFailure(null));
         }
         finally
         {
             principal?.Dispose();
         }
 
-        WriteObject(
-            sendToPipeline: Traverse(source),
-            enumerateCollection: true);
+        _truncatedOutput = false;
+        TreeObjectBase[] result = Traverse(source);
+        DisplayWarningIfTruncatedOutput();
+        WriteObject(sendToPipeline: result, enumerateCollection: true);
     }
 
     private TreeObjectBase[] Traverse(string source)
@@ -148,13 +149,13 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                 _index.Add(treeGroup);
                 current?.Dispose();
             }
-            catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
             {
                 throw;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                WriteError(e.EnumerationFailure(current));
+                WriteError(exception.EnumerationFailure(current));
             }
         }
 

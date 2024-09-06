@@ -31,23 +31,25 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 return;
             }
 
-            WriteObject(
-                sendToPipeline: Traverse(
-                    groupPrincipal: group,
-                    source: group.DistinguishedName),
-                enumerateCollection: true);
+            _truncatedOutput = false;
+            TreeObjectBase[] result = Traverse(
+                groupPrincipal: group,
+                source: group.DistinguishedName);
+
+            DisplayWarningIfTruncatedOutput();
+            WriteObject(sendToPipeline: result, enumerateCollection: true);
         }
-        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
             throw;
         }
-        catch (MultipleMatchesException e)
+        catch (MultipleMatchesException exception)
         {
-            WriteError(e.AmbiguousIdentity(Identity));
+            WriteError(exception.AmbiguousIdentity(Identity));
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            WriteError(e.Unspecified(Identity));
+            WriteError(exception.Unspecified(Identity));
         }
     }
 
@@ -105,13 +107,13 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 _index.TryAddPrincipals();
                 current?.Dispose();
             }
-            catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
             {
                 throw;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                WriteError(e.EnumerationFailure(current));
+                WriteError(exception.EnumerationFailure(current));
             }
         }
 
