@@ -98,17 +98,15 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
+        if (!Recursive.IsPresent && treeGroup.Depth >= Depth && !_truncateWritten)
+        {
+            this.WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
+            _truncateWritten = true;
+        }
+
         if (Recursive.IsPresent || treeGroup.Depth <= Depth)
         {
             _stack.Push((groupPrincipal, treeGroup));
-        }
-        else
-        {
-            if (!_truncateWritten)
-            {
-                this.WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
-                _truncateWritten = true;
-            }
         }
     }
 
