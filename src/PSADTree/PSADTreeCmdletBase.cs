@@ -16,6 +16,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private bool _disposed;
 
+    private bool _truncateWritten;
+
     protected readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
 
     internal readonly TreeCache _cache = new();
@@ -86,6 +88,14 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         if (Recursive.IsPresent || treeGroup.Depth <= Depth)
         {
             _stack.Push((groupPrincipal, treeGroup));
+        }
+        else
+        {
+            if (!_truncateWritten)
+            {
+                this.WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
+                _truncateWritten = true;
+            }
         }
     }
 
