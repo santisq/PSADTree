@@ -69,7 +69,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
         try
         {
-            using PrincipalSearchResult<Principal> search = principal.GetGroups();
+            using PrincipalSearchResult<Principal> search = principal.GetGroups(_context);
             foreach (Principal parent in search.GetSortedEnumerable(_comparer))
             {
                 if (ShouldExclude(parent, _exclusionPatterns))
@@ -138,7 +138,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                     continue;
                 }
 
-                using PrincipalSearchResult<Principal>? search = current?.GetGroups();
+                using PrincipalSearchResult<Principal>? search = current?.GetGroups(_context);
 
                 if (search is not null)
                 {
