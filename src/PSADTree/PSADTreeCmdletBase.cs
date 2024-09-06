@@ -32,7 +32,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
 
-
     [Parameter(
             Position = 0,
             Mandatory = true,
@@ -43,6 +42,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     [Parameter]
     public string? Server { get; set; }
+
+    [Parameter(ValueFromPipelineByPropertyName = true)]
+    [Credential]
+    public PSCredential? Credential { get; set; }
 
     [Parameter(ParameterSetName = DepthParameterSet)]
     [ValidateRange(0, int.MaxValue)]
@@ -72,6 +75,16 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             if (Server is null)
             {
                 _context = new PrincipalContext(ContextType.Domain);
+                return;
+            }
+
+            if (Credential is not null)
+            {
+                _context = new PrincipalContext(
+                    ContextType.Domain,
+                    Server,
+                    Credential.UserName,
+                    Credential.GetNetworkCredential().Password);
                 return;
             }
 
