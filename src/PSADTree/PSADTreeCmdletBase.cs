@@ -65,6 +65,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         try
         {
+            if (Recursive.IsPresent)
+            {
+                Depth = int.MaxValue;
+            }
+
             if (Exclude is not null)
             {
                 _exclusionPatterns = Exclude
@@ -103,13 +108,17 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
-        if (Recursive.IsPresent || treeGroup.Depth <= Depth)
+        if (treeGroup.Depth > Depth)
         {
-            _stack.Push((groupPrincipal, treeGroup));
             return;
         }
 
-        _truncatedOutput = true;
+        if (treeGroup.Depth == Depth)
+        {
+            _truncatedOutput = true;
+        }
+
+        _stack.Push((groupPrincipal, treeGroup));
     }
 
     protected void DisplayWarningIfTruncatedOutput()

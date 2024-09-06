@@ -185,7 +185,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
         TreeObjectBase AddTreeObject(TreeObjectBase obj)
         {
-            if (Recursive.IsPresent || depth <= Depth)
+            if (depth <= Depth)
             {
                 _index.AddPrincipal(obj);
             }
@@ -213,7 +213,6 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
     private void EnumerateMembers(TreeGroup parent, int depth)
     {
-        bool shouldProcess = Recursive.IsPresent || depth <= Depth;
         foreach (TreeObjectBase member in parent.Childs)
         {
             if (member is TreeGroup treeGroup)
@@ -222,7 +221,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 continue;
             }
 
-            if (shouldProcess)
+            if (depth <= Depth)
             {
                 _index.Add(member.Clone(parent, depth));
             }

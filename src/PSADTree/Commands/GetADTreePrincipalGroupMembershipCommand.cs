@@ -198,7 +198,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
     private void EnumerateMembership(TreeGroup parent, int depth)
     {
-        if (!Recursive.IsPresent && depth > Depth)
+        if (depth > Depth)
         {
             return;
         }
