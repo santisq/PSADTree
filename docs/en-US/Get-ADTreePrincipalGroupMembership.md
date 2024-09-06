@@ -98,7 +98,7 @@ The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of 
 ### -Depth
 
 Determines the number of nested group memberships included in the recursion.
-By default, only 3 levels of recursion are included.
+By default, only 3 levels of recursion are included. `Get-ADTreePrincipalGroupMembership` emits a warning if the levels exceed this number.
 
 ```yaml
 Type: Int32
