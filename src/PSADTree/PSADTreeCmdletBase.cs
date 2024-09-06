@@ -72,23 +72,28 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
                     .ToArray();
             }
 
-            if (Server is null)
+            if (Credential is null && Server is null)
             {
                 _context = new PrincipalContext(ContextType.Domain);
                 return;
             }
 
-            if (Credential is not null)
+            if (Server is null)
             {
-                _context = new PrincipalContext(
-                    ContextType.Domain,
-                    Server,
-                    Credential.UserName,
-                    Credential.GetNetworkCredential().Password);
+                ThrowTerminatingError(Exceptions.CredentialRequiresServer());
+            }
+
+            if (Credential is null)
+            {
+                _context = new PrincipalContext(ContextType.Domain, Server);
                 return;
             }
 
-            _context = new PrincipalContext(ContextType.Domain, Server);
+            _context = new PrincipalContext(
+                ContextType.Domain,
+                Server,
+                Credential.UserName,
+                Credential.GetNetworkCredential().Password);
         }
         catch (Exception exception)
         {

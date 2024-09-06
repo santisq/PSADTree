@@ -4,7 +4,7 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-internal static class ErrorHelper
+internal static class Exceptions
 {
     internal static ErrorRecord IdentityNotFound(string? identity) =>
         new(
@@ -12,6 +12,13 @@ internal static class ErrorHelper
             "IdentityNotFound",
             ErrorCategory.ObjectNotFound,
             identity);
+
+    internal static ErrorRecord CredentialRequiresServer() =>
+        new(
+            new ArgumentException("Server parameter is required when Credential parameter is used."),
+            "CredentialRequiresServer",
+            ErrorCategory.InvalidOperation,
+            null);
 
     internal static ErrorRecord AmbiguousIdentity(this Exception exception, string? identity) =>
         new(exception, "AmbiguousIdentity", ErrorCategory.InvalidResult, identity);

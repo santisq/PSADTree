@@ -42,7 +42,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
         if (principal is null)
         {
-            WriteError(ErrorHelper.IdentityNotFound(Identity));
+            WriteError(Exceptions.IdentityNotFound(Identity));
             return;
         }
 

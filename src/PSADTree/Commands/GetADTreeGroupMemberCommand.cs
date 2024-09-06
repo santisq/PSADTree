@@ -27,7 +27,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
             if (group is null)
             {
-                WriteError(ErrorHelper.IdentityNotFound(Identity));
+                WriteError(Exceptions.IdentityNotFound(Identity));
                 return;
             }
 
