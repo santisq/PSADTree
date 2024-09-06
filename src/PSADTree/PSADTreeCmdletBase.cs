@@ -43,7 +43,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     [Parameter]
     public string? Server { get; set; }
 
-    [Parameter(ValueFromPipelineByPropertyName = true)]
+    [Parameter]
     [Credential]
     public PSCredential? Credential { get; set; }
 
