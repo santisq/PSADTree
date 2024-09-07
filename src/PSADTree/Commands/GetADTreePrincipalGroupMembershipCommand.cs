@@ -18,6 +18,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
+        _truncatedOutput = false;
         Principal? principal;
         Clear();
 
@@ -95,7 +96,6 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             principal?.Dispose();
         }
 
-        _truncatedOutput = false;
         TreeObjectBase[] result = Traverse(source);
         DisplayWarningIfTruncatedOutput();
         WriteObject(sendToPipeline: result, enumerateCollection: true);

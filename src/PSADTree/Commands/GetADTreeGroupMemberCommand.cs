@@ -21,6 +21,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
+        _truncatedOutput = false;
 
         try
         {
@@ -31,7 +32,6 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 return;
             }
 
-            _truncatedOutput = false;
             TreeObjectBase[] result = Traverse(
                 groupPrincipal: group,
                 source: group.DistinguishedName);
