@@ -4,7 +4,7 @@ using System.Management.Automation;
 
 namespace PSADTree;
 
-internal static class ErrorHelper
+internal static class Exceptions
 {
     internal static ErrorRecord IdentityNotFound(string? identity) =>
         new(

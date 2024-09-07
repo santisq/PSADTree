@@ -21,33 +21,35 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
+        _truncatedOutput = false;
 
         try
         {
             using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
             if (group is null)
             {
-                WriteError(ErrorHelper.IdentityNotFound(Identity));
+                WriteError(Exceptions.IdentityNotFound(Identity));
                 return;
             }
 
-            WriteObject(
-                sendToPipeline: Traverse(
-                    groupPrincipal: group,
-                    source: group.DistinguishedName),
-                enumerateCollection: true);
+            TreeObjectBase[] result = Traverse(
+                groupPrincipal: group,
+                source: group.DistinguishedName);
+
+            DisplayWarningIfTruncatedOutput();
+            WriteObject(sendToPipeline: result, enumerateCollection: true);
         }
-        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
             throw;
         }
-        catch (MultipleMatchesException e)
+        catch (MultipleMatchesException exception)
         {
-            WriteError(e.AmbiguousIdentity(Identity));
+            WriteError(exception.AmbiguousIdentity(Identity));
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            WriteError(e.Unspecified(Identity));
+            WriteError(exception.Unspecified(Identity));
         }
     }
 
@@ -105,13 +107,13 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 _index.TryAddPrincipals();
                 current?.Dispose();
             }
-            catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
             {
                 throw;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                WriteError(e.EnumerationFailure(current));
+                WriteError(exception.EnumerationFailure(current));
             }
         }
 
@@ -183,7 +185,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
         TreeObjectBase AddTreeObject(TreeObjectBase obj)
         {
-            if (Recursive.IsPresent || depth <= Depth)
+            if (depth <= Depth)
             {
                 _index.AddPrincipal(obj);
             }
@@ -211,7 +213,6 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
     private void EnumerateMembers(TreeGroup parent, int depth)
     {
-        bool shouldProcess = Recursive.IsPresent || depth <= Depth;
         foreach (TreeObjectBase member in parent.Childs)
         {
             if (member is TreeGroup treeGroup)
@@ -220,7 +221,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                 continue;
             }
 
-            if (shouldProcess)
+            if (depth <= Depth)
             {
                 _index.Add(member.Clone(parent, depth));
             }

@@ -16,6 +16,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private bool _disposed;
 
+    protected bool _truncatedOutput;
+
     protected readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
 
     internal readonly TreeCache _cache = new();
@@ -30,7 +32,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
 
-
     [Parameter(
             Position = 0,
             Mandatory = true,
@@ -40,7 +41,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string? Identity { get; set; }
 
     [Parameter]
-    public string? Server { get; set; }
+    public string Server { get; set; } = Environment.UserDomainName;
+
+    [Parameter]
+    [Credential]
+    public PSCredential? Credential { get; set; }
 
     [Parameter(ParameterSetName = DepthParameterSet)]
     [ValidateRange(0, int.MaxValue)]
@@ -60,6 +65,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         try
         {
+            if (Recursive.IsPresent)
+            {
+                Depth = int.MaxValue;
+            }
+
             if (Exclude is not null)
             {
                 _exclusionPatterns = Exclude
@@ -67,13 +77,17 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
                     .ToArray();
             }
 
-            if (Server is null)
+            if (Credential is null)
             {
-                _context = new PrincipalContext(ContextType.Domain);
+                _context = new PrincipalContext(ContextType.Domain, Server);
                 return;
             }
 
-            _context = new PrincipalContext(ContextType.Domain, Server);
+            _context = new PrincipalContext(
+                ContextType.Domain,
+                Server,
+                Credential.UserName,
+                Credential.GetNetworkCredential().Password);
         }
         catch (Exception exception)
         {
@@ -83,9 +97,24 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
-        if (Recursive.IsPresent || treeGroup.Depth <= Depth)
+        if (treeGroup.Depth > Depth)
         {
-            _stack.Push((groupPrincipal, treeGroup));
+            return;
+        }
+
+        if (treeGroup.Depth == Depth)
+        {
+            _truncatedOutput = true;
+        }
+
+        _stack.Push((groupPrincipal, treeGroup));
+    }
+
+    protected void DisplayWarningIfTruncatedOutput()
+    {
+        if (_truncatedOutput)
+        {
+            WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
         }
     }
 

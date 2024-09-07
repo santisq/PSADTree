@@ -18,6 +18,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
+        _truncatedOutput = false;
         Principal? principal;
         Clear();
 
@@ -25,24 +26,24 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         {
             principal = Principal.FindByIdentity(_context, Identity);
         }
-        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
             throw;
         }
-        catch (MultipleMatchesException e)
+        catch (MultipleMatchesException exception)
         {
-            WriteError(e.AmbiguousIdentity(Identity));
+            WriteError(exception.AmbiguousIdentity(Identity));
             return;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            WriteError(e.Unspecified(Identity));
+            WriteError(exception.Unspecified(Identity));
             return;
         }
 
         if (principal is null)
         {
-            WriteError(ErrorHelper.IdentityNotFound(Identity));
+            WriteError(Exceptions.IdentityNotFound(Identity));
             return;
         }
 
@@ -69,7 +70,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
         try
         {
-            using PrincipalSearchResult<Principal> search = principal.GetGroups();
+            using PrincipalSearchResult<Principal> search = principal.GetGroups(_context);
             foreach (Principal parent in search.GetSortedEnumerable(_comparer))
             {
                 if (ShouldExclude(parent, _exclusionPatterns))
@@ -82,22 +83,22 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                 Push(groupPrincipal, treeGroup);
             }
         }
-        catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
             throw;
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            WriteError(e.EnumerationFailure(null));
+            WriteError(exception.EnumerationFailure(null));
         }
         finally
         {
             principal?.Dispose();
         }
 
-        WriteObject(
-            sendToPipeline: Traverse(source),
-            enumerateCollection: true);
+        TreeObjectBase[] result = Traverse(source);
+        DisplayWarningIfTruncatedOutput();
+        WriteObject(sendToPipeline: result, enumerateCollection: true);
     }
 
     private TreeObjectBase[] Traverse(string source)
@@ -138,7 +139,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                     continue;
                 }
 
-                using PrincipalSearchResult<Principal>? search = current?.GetGroups();
+                using PrincipalSearchResult<Principal>? search = current?.GetGroups(_context);
 
                 if (search is not null)
                 {
@@ -148,13 +149,13 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                 _index.Add(treeGroup);
                 current?.Dispose();
             }
-            catch (Exception e) when (e is PipelineStoppedException or FlowControlException)
+            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
             {
                 throw;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                WriteError(e.EnumerationFailure(current));
+                WriteError(exception.EnumerationFailure(current));
             }
         }
 
@@ -197,7 +198,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
     private void EnumerateMembership(TreeGroup parent, int depth)
     {
-        if (!Recursive.IsPresent && depth > Depth)
+        if (depth > Depth)
         {
             return;
         }
