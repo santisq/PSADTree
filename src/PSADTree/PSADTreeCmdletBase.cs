@@ -41,7 +41,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string? Identity { get; set; }
 
     [Parameter]
-    public string? Server { get; set; }
+    public string Server { get; set; } = Environment.UserDomainName;
 
     [Parameter]
     [Credential]
@@ -75,17 +75,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
                 _exclusionPatterns = Exclude
                     .Select(e => new WildcardPattern(e, _wpoptions))
                     .ToArray();
-            }
-
-            if (Credential is null && Server is null)
-            {
-                _context = new PrincipalContext(ContextType.Domain);
-                return;
-            }
-
-            if (Server is null)
-            {
-                ThrowTerminatingError(Exceptions.CredentialRequiresServer());
             }
 
             if (Credential is null)
