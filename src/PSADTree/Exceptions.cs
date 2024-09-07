@@ -13,13 +13,6 @@ internal static class Exceptions
             ErrorCategory.ObjectNotFound,
             identity);
 
-    internal static ErrorRecord CredentialRequiresServer() =>
-        new(
-            new ArgumentException("Server parameter is required when Credential parameter is used."),
-            "CredentialRequiresServer",
-            ErrorCategory.InvalidOperation,
-            null);
-
     internal static ErrorRecord AmbiguousIdentity(this Exception exception, string? identity) =>
         new(exception, "AmbiguousIdentity", ErrorCategory.InvalidResult, identity);
 
