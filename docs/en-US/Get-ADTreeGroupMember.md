@@ -1,4 +1,4 @@
-﻿---
+---
 external help file: PSADTree.dll-Help.xml
 Module Name: PSADTree
 online version: https://github.com/santisq/PSADTree/blob/main/docs/en-US/Get-ADTreeGroupMember.md
