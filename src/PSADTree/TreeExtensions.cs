@@ -153,12 +153,6 @@ internal static class TreeExtensions
             .ThenBy(static e => e, comparer);
     }
 
-    // internal static IOrderedEnumerable<Principal> GetSortedEnumerable(
-    //     this PrincipalSearchResult<Principal> search, PSADTreeComparer comparer) =>
-    //     search
-    //         .OrderBy(static e => e.StructuralObjectClass == "group")
-    //         .ThenBy(static e => e, comparer);
-
     internal static string GetDefaultNamingContext(this string distinguishedName) =>
         s_reDefaultNamingContext.Match(distinguishedName).Value;
 }
