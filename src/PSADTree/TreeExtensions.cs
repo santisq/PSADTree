@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
+#if NETCOREAPP
 using System.Runtime.CompilerServices;
+#else
 using System.Text;
+#endif
 using System.Text.RegularExpressions;
 
 namespace PSADTree;
