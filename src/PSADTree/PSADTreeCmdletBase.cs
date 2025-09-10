@@ -24,7 +24,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     internal readonly TreeIndex _index = new();
 
-    internal PSADTreeComparer _comparer = new();
+    internal PSADTreeComparer Comparer { get; } = new();
 
     protected WildcardPattern[]? _exclusionPatterns;
 
@@ -91,7 +91,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
         catch (Exception exception)
         {
-            ThrowTerminatingError(exception.SetPrincipalContext());
+            ThrowTerminatingError(exception.ToSetPrincipalContext());
         }
     }
 

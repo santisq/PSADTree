@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
 
@@ -32,18 +33,18 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         }
         catch (MultipleMatchesException exception)
         {
-            WriteError(exception.AmbiguousIdentity(Identity));
+            WriteError(exception.ToAmbiguousIdentity(Identity));
             return;
         }
         catch (Exception exception)
         {
-            WriteError(exception.Unspecified(Identity));
+            WriteError(exception.ToUnspecified(Identity));
             return;
         }
 
         if (principal is null)
         {
-            WriteError(Exceptions.IdentityNotFound(Identity));
+            WriteError(Identity.ToIdentityNotFound());
             return;
         }
 
@@ -70,8 +71,12 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
         try
         {
-            using PrincipalSearchResult<Principal> search = principal.GetGroups(_context);
-            foreach (Principal parent in search.GetSortedEnumerable(_comparer))
+            IEnumerable<Principal> groups = principal.ToSafeSortedEnumerable(
+                selector: principal => principal.GetGroups(_context),
+                cmdlet: this,
+                comparer: Comparer);
+
+            foreach (Principal parent in groups)
             {
                 if (ShouldExclude(parent, _exclusionPatterns))
                 {
@@ -89,7 +94,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         }
         catch (Exception exception)
         {
-            WriteError(exception.EnumerationFailure(null));
+            WriteError(exception.ToEnumerationFailure(null));
         }
         finally
         {
@@ -139,11 +144,14 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                     continue;
                 }
 
-                using PrincipalSearchResult<Principal>? search = current?.GetGroups(_context);
-
-                if (search is not null)
+                if (current is not null)
                 {
-                    EnumerateMembership(treeGroup, search, source, depth);
+                    IEnumerable<Principal> groups = current.ToSafeSortedEnumerable(
+                        selector: principal => principal.GetGroups(_context),
+                        cmdlet: this,
+                        comparer: Comparer);
+
+                    EnumerateMembership(treeGroup, groups, source, depth);
                 }
 
                 _index.Add(treeGroup);
@@ -155,7 +163,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             }
             catch (Exception exception)
             {
-                WriteError(exception.EnumerationFailure(current));
+                WriteError(exception.ToEnumerationFailure(current));
             }
         }
 
@@ -164,11 +172,11 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
     private void EnumerateMembership(
         TreeGroup parent,
-        PrincipalSearchResult<Principal> searchResult,
+        IEnumerable<Principal> groups,
         string source,
         int depth)
     {
-        foreach (Principal group in searchResult.GetSortedEnumerable(_comparer))
+        foreach (Principal group in groups)
         {
             if (ShouldExclude(group, _exclusionPatterns))
             {

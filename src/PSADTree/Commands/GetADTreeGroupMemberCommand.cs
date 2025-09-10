@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
 
@@ -28,7 +29,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
             if (group is null)
             {
-                WriteError(Exceptions.IdentityNotFound(Identity));
+                WriteError(Identity.ToIdentityNotFound());
                 return;
             }
 
@@ -45,11 +46,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
         catch (MultipleMatchesException exception)
         {
-            WriteError(exception.AmbiguousIdentity(Identity));
+            WriteError(exception.ToAmbiguousIdentity(Identity));
         }
         catch (Exception exception)
         {
-            WriteError(exception.Unspecified(Identity));
+            WriteError(exception.ToUnspecified(Identity));
         }
     }
 
@@ -96,11 +97,9 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     continue;
                 }
 
-                using PrincipalSearchResult<Principal>? search = current?.GetMembers();
-
-                if (search is not null)
+                if (current is not null)
                 {
-                    EnumerateMembers(treeGroup, search, source, depth);
+                    EnumerateMembers(treeGroup, current, source, depth);
                 }
 
                 _index.Add(treeGroup);
@@ -113,7 +112,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             }
             catch (Exception exception)
             {
-                WriteError(exception.EnumerationFailure(current));
+                WriteError(exception.ToEnumerationFailure(current));
             }
         }
 
@@ -122,11 +121,16 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
     private void EnumerateMembers(
         TreeGroup parent,
-        PrincipalSearchResult<Principal> searchResult,
+        GroupPrincipal group,
         string source,
         int depth)
     {
-        foreach (Principal member in searchResult.GetSortedEnumerable(_comparer))
+        IEnumerable<Principal> members = group.ToSafeSortedEnumerable(
+            selector: group => group.GetMembers(),
+            cmdlet: this,
+            comparer: Comparer);
+
+        foreach (Principal member in members)
         {
             IDisposable? disposable = null;
             try
