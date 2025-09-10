@@ -144,7 +144,6 @@ internal static class TreeExtensions
             catch (Exception exception)
             {
                 cmdlet.WriteError(exception.ToEnumerationFailure(principal));
-                continue;
             }
         }
 
