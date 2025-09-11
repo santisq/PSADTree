@@ -28,7 +28,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected WildcardPattern[]? _exclusionPatterns;
 
-    private const WildcardOptions _wpoptions = WildcardOptions.Compiled
+    private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
 
@@ -73,7 +73,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             if (Exclude is not null)
             {
                 _exclusionPatterns = Exclude
-                    .Select(e => new WildcardPattern(e, _wpoptions))
+                    .Select(e => new WildcardPattern(e, WildcardPatternOptions))
                     .ToArray();
             }
 
