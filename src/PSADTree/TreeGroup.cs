@@ -14,9 +14,9 @@ public sealed class TreeGroup : TreeObjectBase
 
     private const string VTReset = "\x1B[0m";
 
-    private List<TreeObjectBase>? _childs;
+    private List<TreeObjectBase> _children = [];
 
-    public ReadOnlyCollection<TreeObjectBase> Childs => new(_childs ??= []);
+    public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
 
     public bool IsCircular { get; private set; }
 
@@ -26,7 +26,7 @@ public sealed class TreeGroup : TreeObjectBase
         int depth)
         : base(group, parent, depth)
     {
-        _childs = group._childs;
+        _children = group._children;
     }
 
     internal TreeGroup(
@@ -51,14 +51,10 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void SetProcessed() => Hierarchy = string.Concat(Hierarchy, Processed);
 
-    internal void Hook(TreeCache cache) => _childs ??= cache[DistinguishedName]._childs;
+    internal void Hook(TreeCache cache) => _children = cache[DistinguishedName]._children;
 
-    internal void AddChild(TreeObjectBase child)
-    {
-        _childs ??= [];
-        _childs.Add(child);
-    }
+    internal void AddChild(TreeObjectBase child) => _children.Add(child);
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>
-        new TreeGroup(this, parent, depth);
+    internal override TreeObjectBase Clone(TreeGroup parent, int depth)
+        => new TreeGroup(this, parent, depth);
 }

@@ -144,6 +144,10 @@ internal static class TreeExtensions
 
                 principals.Add(enumerator.Current);
             }
+            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
+            {
+                throw;
+            }
             catch (Exception exception)
             {
                 cmdlet.WriteError(exception.ToEnumerationFailure(principal));

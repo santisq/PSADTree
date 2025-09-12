@@ -16,17 +16,17 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private bool _disposed;
 
-    protected bool _truncatedOutput;
+    protected bool TruncatedOutput { get; set; }
 
-    protected readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
+    protected Stack<(GroupPrincipal? group, TreeGroup treeGroup)> Stack { get; } = new();
 
-    internal readonly TreeCache _cache = new();
+    internal TreeCache Cache { get; } = new();
 
-    internal readonly TreeIndex _index = new();
+    internal TreeIndex Index { get; } = new();
 
     internal PSADTreeComparer Comparer { get; } = new();
 
-    protected WildcardPattern[]? _exclusionPatterns;
+    protected WildcardPattern[]? ExclusionPatterns { get; set; }
 
     private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
         | WildcardOptions.CultureInvariant
@@ -72,9 +72,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
             if (Exclude is not null)
             {
-                _exclusionPatterns = Exclude
-                    .Select(e => new WildcardPattern(e, WildcardPatternOptions))
-                    .ToArray();
+                ExclusionPatterns = [.. Exclude.Select(e => new WildcardPattern(e, WildcardPatternOptions))];
             }
 
             if (Credential is null)
@@ -104,15 +102,15 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
         if (treeGroup.Depth == Depth)
         {
-            _truncatedOutput = true;
+            TruncatedOutput = true;
         }
 
-        _stack.Push((groupPrincipal, treeGroup));
+        Stack.Push((groupPrincipal, treeGroup));
     }
 
     protected void DisplayWarningIfTruncatedOutput()
     {
-        if (_truncatedOutput)
+        if (TruncatedOutput)
         {
             WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
         }
@@ -154,11 +152,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
     }
 
-    protected void Clear()
-    {
-        _index.Clear();
-        _cache.Clear();
-    }
+    // protected void Clear()
+    // {
+    //     Index.Clear();
+    //     Cache.Clear();
+    // }
 
     public void Dispose()
     {

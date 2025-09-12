@@ -22,7 +22,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
-        _truncatedOutput = false;
+        TruncatedOutput = false;
 
         try
         {
@@ -59,72 +59,104 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         string source)
     {
         int depth;
-        Clear();
+        Index.Clear();
         Push(groupPrincipal, new TreeGroup(source, groupPrincipal));
+        HashSet<string> visited = [];
 
-        while (_stack.Count > 0)
+        while (Stack.Count > 0)
         {
-            (GroupPrincipal? current, TreeGroup treeGroup) = _stack.Pop();
+            (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
+            depth = treeGroup.Depth + 1;
+            Index.Add(treeGroup);
 
-            try
+            // if this node has been already processed
+            if (!Cache.TryAdd(treeGroup))
             {
-                depth = treeGroup.Depth + 1;
-
-                // if this node has been already processed
-                if (!_cache.TryAdd(treeGroup))
+                // if it's a circular reference, go next
+                if (TreeCache.IsCircular(treeGroup))
                 {
-                    current?.Dispose();
-                    treeGroup.Hook(_cache);
-                    _index.Add(treeGroup);
-
-                    // if it's a circular reference, go next
-                    if (TreeCache.IsCircular(treeGroup))
-                    {
-                        treeGroup.SetCircularNested();
-                        continue;
-                    }
-
-                    // else, if we want to show all nodes
-                    if (ShowAll.IsPresent)
-                    {
-                        // reconstruct the output without querying AD again
-                        EnumerateMembers(treeGroup, depth);
-                        continue;
-                    }
-
-                    // else, just skip this reference and go next
-                    treeGroup.SetProcessed();
+                    treeGroup.SetCircularNested();
                     continue;
                 }
 
-                if (current is not null)
+                // else, if we want to show all nodes and this node was not yet visited
+                if (ShowAll && !visited.Add(treeGroup.DistinguishedName))
                 {
-                    EnumerateMembers(treeGroup, current, source, depth);
+                    // reconstruct the output without querying AD again
+                    EnumerateMembers(treeGroup, depth);
+                    continue;
                 }
 
-                _index.Add(treeGroup);
-                _index.TryAddPrincipals();
-                current?.Dispose();
+                // else, just skip this reference and go next
+                treeGroup.SetProcessed();
+                continue;
             }
-            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                WriteError(exception.ToEnumerationFailure(current));
-            }
+
+            // else, group isn't cached query AD
+            EnumerateMembers(treeGroup, current, source, depth);
+            Index.TryAddPrincipals();
+            current?.Dispose();
         }
 
-        return _index.GetTree();
+        return Index.GetTree();
+    }
+
+    private TreeObjectBase ProcessPrincipal(
+        Principal principal,
+        TreeGroup parent,
+        string source,
+        int depth)
+    {
+        return principal switch
+        {
+            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
+            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
+            GroupPrincipal group => HandleGroup(parent, group, source, depth),
+            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
+        };
+
+        TreeObjectBase AddTreeObject(TreeObjectBase obj)
+        {
+            if (depth <= Depth)
+            {
+                Index.AddPrincipal(obj);
+            }
+
+            return obj;
+        }
+
+        TreeObjectBase HandleGroup(
+            TreeGroup parent,
+            GroupPrincipal group,
+            string source,
+            int depth)
+        {
+            if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+            {
+                TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
+                cloned.Hook(Cache);
+                Push(null, cloned);
+                group.Dispose();
+                return treeGroup;
+            }
+
+            treeGroup = new TreeGroup(source, parent, group, depth);
+            Push(group, treeGroup);
+            return treeGroup;
+        }
     }
 
     private void EnumerateMembers(
         TreeGroup parent,
-        GroupPrincipal group,
+        GroupPrincipal? group,
         string source,
         int depth)
     {
+        if (group is null)
+        {
+            return;
+        }
+
         IEnumerable<Principal> members = group.ToSafeSortedEnumerable(
             selector: group => group.GetMembers(),
             cmdlet: this,
@@ -150,7 +182,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     }
                 }
 
-                if (ShouldExclude(member, _exclusionPatterns))
+                if (ShouldExclude(member, ExclusionPatterns))
                 {
                     continue;
                 }
@@ -161,10 +193,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     source: source,
                     depth: depth);
 
-                if (ShowAll.IsPresent)
-                {
-                    parent.AddChild(treeObject);
-                }
+                parent.AddChild(treeObject);
             }
             finally
             {
@@ -173,51 +202,9 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    private TreeObjectBase ProcessPrincipal(
-        Principal principal,
-        TreeGroup parent,
-        string source,
-        int depth)
-    {
-        return principal switch
-        {
-            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
-            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
-            GroupPrincipal group => HandleGroup(parent, group, source, depth),
-            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
-        };
-
-        TreeObjectBase AddTreeObject(TreeObjectBase obj)
-        {
-            if (depth <= Depth)
-            {
-                _index.AddPrincipal(obj);
-            }
-
-            return obj;
-        }
-
-        TreeObjectBase HandleGroup(
-            TreeGroup parent,
-            GroupPrincipal group,
-            string source,
-            int depth)
-        {
-            if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
-            {
-                Push(group, (TreeGroup)treeGroup.Clone(parent, depth));
-                return treeGroup;
-            }
-
-            treeGroup = new TreeGroup(source, parent, group, depth);
-            Push(group, treeGroup);
-            return treeGroup;
-        }
-    }
-
     private void EnumerateMembers(TreeGroup parent, int depth)
     {
-        foreach (TreeObjectBase member in parent.Childs)
+        foreach (TreeObjectBase member in parent.Children)
         {
             if (member is TreeGroup treeGroup)
             {
@@ -227,7 +214,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
             if (depth <= Depth)
             {
-                _index.Add(member.Clone(parent, depth));
+                Index.Add(member.Clone(parent, depth));
             }
         }
     }

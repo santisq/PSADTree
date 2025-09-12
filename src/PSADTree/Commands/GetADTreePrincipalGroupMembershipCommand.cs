@@ -19,9 +19,9 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(_context is not null);
-        _truncatedOutput = false;
+        TruncatedOutput = false;
         Principal? principal;
-        Clear();
+        Index.Clear();
 
         try
         {
@@ -52,17 +52,17 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         switch (principal)
         {
             case UserPrincipal user:
-                _index.Add(new TreeUser(source, user));
+                Index.Add(new TreeUser(source, user));
                 break;
 
             case ComputerPrincipal computer:
-                _index.Add(new TreeComputer(source, computer));
+                Index.Add(new TreeComputer(source, computer));
                 break;
 
             case GroupPrincipal group:
                 TreeGroup treeGroup = new(source, group);
-                _index.Add(treeGroup);
-                _cache.Add(treeGroup);
+                Index.Add(treeGroup);
+                Cache.Add(treeGroup);
                 break;
 
             default:
@@ -78,7 +78,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
             foreach (Principal parent in groups)
             {
-                if (ShouldExclude(parent, _exclusionPatterns))
+                if (ShouldExclude(parent, ExclusionPatterns))
                 {
                     continue;
                 }
@@ -109,20 +109,20 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     private TreeObjectBase[] Traverse(string source)
     {
         int depth;
-        while (_stack.Count > 0)
+        while (Stack.Count > 0)
         {
-            (GroupPrincipal? current, TreeGroup treeGroup) = _stack.Pop();
+            (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
 
             try
             {
                 depth = treeGroup.Depth + 1;
 
                 // if this node has been already processed
-                if (!_cache.TryAdd(treeGroup))
+                if (!Cache.TryAdd(treeGroup))
                 {
                     current?.Dispose();
-                    treeGroup.Hook(_cache);
-                    _index.Add(treeGroup);
+                    treeGroup.Hook(Cache);
+                    Index.Add(treeGroup);
 
                     // if it's a circular reference, go next
                     if (TreeCache.IsCircular(treeGroup))
@@ -154,7 +154,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                     EnumerateMembership(treeGroup, groups, source, depth);
                 }
 
-                _index.Add(treeGroup);
+                Index.Add(treeGroup);
                 current?.Dispose();
             }
             catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
@@ -167,7 +167,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             }
         }
 
-        return _index.GetTree();
+        return Index.GetTree();
     }
 
     private void EnumerateMembership(
@@ -178,7 +178,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         foreach (Principal group in groups)
         {
-            if (ShouldExclude(group, _exclusionPatterns))
+            if (ShouldExclude(group, ExclusionPatterns))
             {
                 continue;
             }
@@ -192,7 +192,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
         TreeGroup ProcessGroup(GroupPrincipal group)
         {
-            if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+            if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
             {
                 Push(group, (TreeGroup)treeGroup.Clone(parent, depth));
                 return treeGroup;
@@ -211,7 +211,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             return;
         }
 
-        foreach (TreeObjectBase child in parent.Childs)
+        foreach (TreeObjectBase child in parent.Children)
         {
             TreeGroup group = (TreeGroup)child;
             Push(null, (TreeGroup)group.Clone(parent, depth));
