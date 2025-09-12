@@ -27,7 +27,7 @@ internal sealed class TreeIndex
         }
     }
 
-    internal TreeObjectBase[] GetTree() => _output.ToArray().ConvertToTree();
+    internal TreeObjectBase[] GetTree() => _output.ToArray().Format();
 
     internal void Clear()
     {

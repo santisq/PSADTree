@@ -25,6 +25,6 @@ public sealed class TreeUser : TreeObjectBase
         : base(source, user)
     { }
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>
-        new TreeUser(this, parent, depth);
+    internal override TreeObjectBase Clone(TreeGroup parent, int depth)
+        => new TreeUser(this, parent, depth);
 }

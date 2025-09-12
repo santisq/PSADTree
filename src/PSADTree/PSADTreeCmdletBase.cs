@@ -12,23 +12,23 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected const string RecursiveParameterSet = "Recursive";
 
-    protected PrincipalContext? _context;
+    protected PrincipalContext? Context { get; set; }
 
     private bool _disposed;
 
-    protected bool _truncatedOutput;
+    protected bool TruncatedOutput { get; set; }
 
-    protected readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
+    protected Stack<(GroupPrincipal? group, TreeGroup treeGroup)> Stack { get; } = new();
 
-    internal readonly TreeCache _cache = new();
+    internal TreeCache Cache { get; } = new();
 
-    internal readonly TreeIndex _index = new();
+    internal TreeIndex Index { get; } = new();
 
-    internal PSADTreeComparer _comparer = new();
+    internal PSADTreeComparer Comparer { get; } = new();
 
-    protected WildcardPattern[]? _exclusionPatterns;
+    protected WildcardPattern[]? ExclusionPatterns { get; set; }
 
-    private const WildcardOptions _wpoptions = WildcardOptions.Compiled
+    private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
 
@@ -72,18 +72,16 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
             if (Exclude is not null)
             {
-                _exclusionPatterns = Exclude
-                    .Select(e => new WildcardPattern(e, _wpoptions))
-                    .ToArray();
+                ExclusionPatterns = [.. Exclude.Select(e => new WildcardPattern(e, WildcardPatternOptions))];
             }
 
             if (Credential is null)
             {
-                _context = new PrincipalContext(ContextType.Domain, Server);
+                Context = new PrincipalContext(ContextType.Domain, Server);
                 return;
             }
 
-            _context = new PrincipalContext(
+            Context = new PrincipalContext(
                 ContextType.Domain,
                 Server,
                 Credential.UserName,
@@ -91,7 +89,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
         catch (Exception exception)
         {
-            ThrowTerminatingError(exception.SetPrincipalContext());
+            ThrowTerminatingError(exception.ToSetPrincipalContext());
         }
     }
 
@@ -104,15 +102,15 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
         if (treeGroup.Depth == Depth)
         {
-            _truncatedOutput = true;
+            TruncatedOutput = true;
         }
 
-        _stack.Push((groupPrincipal, treeGroup));
+        Stack.Push((groupPrincipal, treeGroup));
     }
 
     protected void DisplayWarningIfTruncatedOutput()
     {
-        if (_truncatedOutput)
+        if (TruncatedOutput)
         {
             WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
         }
@@ -149,16 +147,16 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         if (disposing && !_disposed)
         {
-            _context?.Dispose();
+            Context?.Dispose();
             _disposed = true;
         }
     }
 
-    protected void Clear()
-    {
-        _index.Clear();
-        _cache.Clear();
-    }
+    // protected void Clear()
+    // {
+    //     Index.Clear();
+    //     Cache.Clear();
+    // }
 
     public void Dispose()
     {

@@ -1,36 +1,32 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.DirectoryServices.AccountManagement;
-using System.Text;
 
 namespace PSADTree;
 
 public sealed class TreeGroup : TreeObjectBase
 {
-    private const string _isCircular = " ↔ Circular Reference";
+    private const string Circular = " ↔ Circular Reference";
 
-    private const string _isProcessed = " ↔ Processed Group";
+    private const string Processed = " ↔ Processed Group";
 
-    private const string _vtBrightRed = "\x1B[91m";
+    private const string VTBrightRed = "\x1B[91m";
 
-    private const string _vtReset = "\x1B[0m";
+    private const string VTReset = "\x1B[0m";
 
-    private static readonly StringBuilder s_sb = new();
+    private List<TreeObjectBase> _children = [];
 
-    private List<TreeObjectBase>? _childs;
-
-    public ReadOnlyCollection<TreeObjectBase> Childs => new(_childs ??= []);
+    public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
 
     public bool IsCircular { get; private set; }
 
     private TreeGroup(
         TreeGroup group,
-        TreeGroup parent,
+        TreeGroup? parent,
         int depth)
         : base(group, parent, depth)
     {
-        _childs = group._childs;
+        _children = group._children;
     }
 
     internal TreeGroup(
@@ -50,25 +46,15 @@ public sealed class TreeGroup : TreeObjectBase
     internal void SetCircularNested()
     {
         IsCircular = true;
-        Hierarchy = s_sb
-            .Append(Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, _vtBrightRed))
-            .Append(_isCircular)
-            .Append(_vtReset)
-            .ToString();
-
-        s_sb.Clear();
+        Hierarchy = $"{Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, VTBrightRed)}{Circular}{VTReset}";
     }
 
-    internal void SetProcessed() => Hierarchy = string.Concat(Hierarchy, _isProcessed);
+    internal void SetProcessed() => Hierarchy = string.Concat(Hierarchy, Processed);
 
-    internal void Hook(TreeCache cache) => _childs ??= cache[DistinguishedName]._childs;
+    internal void Hook(TreeCache cache) => _children = cache[DistinguishedName]._children;
 
-    internal void AddChild(TreeObjectBase child)
-    {
-        _childs ??= [];
-        _childs.Add(child);
-    }
+    internal void AddChild(TreeObjectBase child) => _children.Add(child);
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>
-        new TreeGroup(this, parent, depth);
+    internal override TreeObjectBase Clone(TreeGroup? parent = null, int depth = 0)
+        => new TreeGroup(this, parent, depth);
 }

@@ -25,6 +25,6 @@ public sealed class TreeComputer : TreeObjectBase
         : base(source, computer)
     { }
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>
-        new TreeComputer(this, parent, depth);
+    internal override TreeObjectBase Clone(TreeGroup parent, int depth)
+        => new TreeComputer(this, parent, depth);
 }
