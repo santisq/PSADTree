@@ -12,7 +12,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected const string RecursiveParameterSet = "Recursive";
 
-    protected PrincipalContext? _context;
+    protected PrincipalContext? Context { get; set; }
 
     private bool _disposed;
 
@@ -77,11 +77,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
             if (Credential is null)
             {
-                _context = new PrincipalContext(ContextType.Domain, Server);
+                Context = new PrincipalContext(ContextType.Domain, Server);
                 return;
             }
 
-            _context = new PrincipalContext(
+            Context = new PrincipalContext(
                 ContextType.Domain,
                 Server,
                 Credential.UserName,
@@ -147,7 +147,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         if (disposing && !_disposed)
         {
-            _context?.Dispose();
+            Context?.Dispose();
             _disposed = true;
         }
     }

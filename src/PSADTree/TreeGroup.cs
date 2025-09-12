@@ -22,7 +22,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private TreeGroup(
         TreeGroup group,
-        TreeGroup parent,
+        TreeGroup? parent,
         int depth)
         : base(group, parent, depth)
     {
@@ -55,6 +55,6 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth)
+    internal override TreeObjectBase Clone(TreeGroup? parent = null, int depth = 0)
         => new TreeGroup(this, parent, depth);
 }

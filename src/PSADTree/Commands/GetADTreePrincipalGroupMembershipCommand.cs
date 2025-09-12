@@ -18,14 +18,14 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     protected override void ProcessRecord()
     {
         Dbg.Assert(Identity is not null);
-        Dbg.Assert(_context is not null);
+        Dbg.Assert(Context is not null);
         TruncatedOutput = false;
         Principal? principal;
         Index.Clear();
 
         try
         {
-            principal = Principal.FindByIdentity(_context, Identity);
+            principal = Principal.FindByIdentity(Context, Identity);
         }
         catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
         {
@@ -62,7 +62,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             case GroupPrincipal group:
                 TreeGroup treeGroup = new(source, group);
                 Index.Add(treeGroup);
-                Cache.Add(treeGroup);
+                Cache.TryAdd(treeGroup);
                 break;
 
             default:
@@ -72,7 +72,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         try
         {
             IEnumerable<Principal> groups = principal.ToSafeSortedEnumerable(
-                selector: principal => principal.GetGroups(_context),
+                selector: principal => principal.GetGroups(Context),
                 cmdlet: this,
                 comparer: Comparer);
 
@@ -109,73 +109,62 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     private TreeObjectBase[] Traverse(string source)
     {
         int depth;
+        HashSet<string> visited = [];
+
         while (Stack.Count > 0)
         {
             (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
 
-            try
+            depth = treeGroup.Depth + 1;
+            Index.Add(treeGroup);
+
+            // if this node has been already processed
+            if (!Cache.TryAdd(treeGroup))
             {
-                depth = treeGroup.Depth + 1;
-
-                // if this node has been already processed
-                if (!Cache.TryAdd(treeGroup))
+                // if it's a circular reference, go next
+                if (TreeCache.IsCircular(treeGroup))
                 {
-                    current?.Dispose();
-                    treeGroup.Hook(Cache);
-                    Index.Add(treeGroup);
-
-                    // if it's a circular reference, go next
-                    if (TreeCache.IsCircular(treeGroup))
-                    {
-                        treeGroup.SetCircularNested();
-                        continue;
-                    }
-
-                    // else, if we want to show all nodes
-                    if (ShowAll.IsPresent)
-                    {
-                        // reconstruct the output without querying AD again
-                        EnumerateMembership(treeGroup, depth);
-                        continue;
-                    }
-
-                    // else, just skip this reference and go next
-                    treeGroup.SetProcessed();
+                    treeGroup.SetCircularNested();
                     continue;
                 }
 
-                if (current is not null)
+                // else, if we want to show all nodes and this node was not yet visited
+                if (ShowAll && !visited.Add(treeGroup.DistinguishedName))
                 {
-                    IEnumerable<Principal> groups = current.ToSafeSortedEnumerable(
-                        selector: principal => principal.GetGroups(_context),
-                        cmdlet: this,
-                        comparer: Comparer);
-
-                    EnumerateMembership(treeGroup, groups, source, depth);
+                    // reconstruct the output without querying AD again
+                    EnumerateMembership(treeGroup, depth);
+                    continue;
                 }
 
-                Index.Add(treeGroup);
-                current?.Dispose();
+                // else, just skip this reference and go next
+                treeGroup.SetProcessed();
+                continue;
             }
-            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                WriteError(exception.ToEnumerationFailure(current));
-            }
+
+            // else, get membership from AD Query
+            EnumerateMembership(current, treeGroup, source, depth);
+            current?.Dispose();
         }
 
         return Index.GetTree();
     }
 
     private void EnumerateMembership(
+        Principal? principal,
         TreeGroup parent,
-        IEnumerable<Principal> groups,
         string source,
         int depth)
     {
+        if (principal is null)
+        {
+            return;
+        }
+
+        IEnumerable<Principal> groups = principal.ToSafeSortedEnumerable(
+            selector: principal => principal.GetGroups(Context),
+            cmdlet: this,
+            comparer: Comparer);
+
         foreach (Principal group in groups)
         {
             if (ShouldExclude(group, ExclusionPatterns))
@@ -184,17 +173,17 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             }
 
             TreeGroup treeGroup = ProcessGroup((GroupPrincipal)group);
-            if (ShowAll.IsPresent)
-            {
-                parent.AddChild(treeGroup);
-            }
+            parent.AddChild(treeGroup);
         }
 
         TreeGroup ProcessGroup(GroupPrincipal group)
         {
             if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
             {
-                Push(group, (TreeGroup)treeGroup.Clone(parent, depth));
+                TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
+                cloned.Hook(Cache);
+                Push(group, cloned);
+                group.Dispose();
                 return treeGroup;
             }
 

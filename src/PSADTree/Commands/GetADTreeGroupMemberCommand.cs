@@ -21,22 +21,19 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     protected override void ProcessRecord()
     {
         Dbg.Assert(Identity is not null);
-        Dbg.Assert(_context is not null);
+        Dbg.Assert(Context is not null);
         TruncatedOutput = false;
 
         try
         {
-            using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
+            using GroupPrincipal? group = GroupPrincipal.FindByIdentity(Context, Identity);
             if (group is null)
             {
                 WriteError(Identity.ToIdentityNotFound());
                 return;
             }
 
-            TreeObjectBase[] result = Traverse(
-                groupPrincipal: group,
-                source: group.DistinguishedName);
-
+            TreeObjectBase[] result = Traverse(group);
             DisplayWarningIfTruncatedOutput();
             WriteObject(sendToPipeline: result, enumerateCollection: true);
         }
@@ -54,14 +51,25 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    private TreeObjectBase[] Traverse(
-        GroupPrincipal groupPrincipal,
-        string source)
+    private TreeGroup GetFirstTreeGroup(GroupPrincipal group)
     {
-        int depth;
+        if (!Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+        {
+            return new(group.DistinguishedName, group);
+        }
+
+        treeGroup = (TreeGroup)treeGroup.Clone();
+        treeGroup.Hook(Cache);
+        return treeGroup;
+    }
+
+    private TreeObjectBase[] Traverse(GroupPrincipal groupPrincipal)
+    {
         Index.Clear();
-        Push(groupPrincipal, new TreeGroup(source, groupPrincipal));
+        int depth;
+        string source = groupPrincipal.DistinguishedName;
         HashSet<string> visited = [];
+        Push(groupPrincipal, GetFirstTreeGroup(groupPrincipal));
 
         while (Stack.Count > 0)
         {
@@ -79,8 +87,8 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     continue;
                 }
 
-                // else, if we want to show all nodes and this node was not yet visited
-                if (ShowAll && !visited.Add(treeGroup.DistinguishedName))
+                // else, if we want to show all nodes OR this node was not yet visited
+                if (ShowAll || !visited.Add(treeGroup.DistinguishedName))
                 {
                     // reconstruct the output without querying AD again
                     EnumerateMembers(treeGroup, depth);
