@@ -8,21 +8,23 @@ namespace PSADTree;
 
 public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 {
+    private bool _disposed;
+
+    private bool _truncatedOutput;
+
+    private readonly HashSet<string> _visited = [];
+
     protected const string DepthParameterSet = "Depth";
 
     protected const string RecursiveParameterSet = "Recursive";
 
     protected PrincipalContext? Context { get; set; }
 
-    private bool _disposed;
-
-    protected bool TruncatedOutput { get; set; }
-
     protected Stack<(GroupPrincipal? group, TreeGroup treeGroup)> Stack { get; } = new();
 
     internal TreeCache Cache { get; } = new();
 
-    internal TreeIndex Index { get; } = new();
+    internal TreeBuilder Index { get; } = new();
 
     internal PSADTreeComparer Comparer { get; } = new();
 
@@ -93,6 +95,15 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
     }
 
+    protected bool IsNotVisited(TreeGroup group) => _visited.Add(group.DistinguishedName);
+
+    protected override void ProcessRecord()
+    {
+        Index.Clear();
+        _visited.Clear();
+        _truncatedOutput = false;
+    }
+
     protected void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
         if (treeGroup.Depth > Depth)
@@ -102,7 +113,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
         if (treeGroup.Depth == Depth)
         {
-            TruncatedOutput = true;
+            _truncatedOutput = true;
         }
 
         Stack.Push((groupPrincipal, treeGroup));
@@ -110,7 +121,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected void DisplayWarningIfTruncatedOutput()
     {
-        if (TruncatedOutput)
+        if (_truncatedOutput)
         {
             WriteWarning($"Result is truncated as enumeration has exceeded the set depth of {Depth}.");
         }
@@ -151,12 +162,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             _disposed = true;
         }
     }
-
-    // protected void Clear()
-    // {
-    //     Index.Clear();
-    //     Cache.Clear();
-    // }
 
     public void Dispose()
     {

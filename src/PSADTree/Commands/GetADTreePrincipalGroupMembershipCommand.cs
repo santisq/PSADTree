@@ -19,9 +19,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(Context is not null);
-        TruncatedOutput = false;
         Principal? principal;
-        Index.Clear();
 
         try
         {
@@ -122,9 +120,8 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             if (!Cache.TryAdd(treeGroup))
             {
                 // if it's a circular reference, go next
-                if (TreeCache.IsCircular(treeGroup))
+                if (treeGroup.SetIfCircularNested())
                 {
-                    treeGroup.SetCircularNested();
                     continue;
                 }
 
@@ -181,7 +178,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
             if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
             {
                 TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
-                cloned.Hook(Cache);
+                cloned.LinkCachedChildren(Cache);
                 Push(group, cloned);
                 group.Dispose();
                 return treeGroup;

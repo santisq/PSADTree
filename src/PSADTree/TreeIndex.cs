@@ -2,17 +2,11 @@
 
 namespace PSADTree;
 
-internal sealed class TreeIndex
+internal sealed class TreeBuilder
 {
-    private readonly List<TreeObjectBase> _principals;
+    private readonly List<TreeObjectBase> _principals = [];
 
-    private readonly List<TreeObjectBase> _output;
-
-    internal TreeIndex()
-    {
-        _principals = [];
-        _output = [];
-    }
+    private readonly List<TreeObjectBase> _output = [];
 
     internal void AddPrincipal(TreeObjectBase principal) => _principals.Add(principal);
 
@@ -22,7 +16,7 @@ internal sealed class TreeIndex
     {
         if (_principals.Count > 0)
         {
-            _output.AddRange([.. _principals]);
+            _output.AddRange(_principals);
             _principals.Clear();
         }
     }

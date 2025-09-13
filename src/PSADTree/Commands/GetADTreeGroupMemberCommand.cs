@@ -22,7 +22,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         Dbg.Assert(Identity is not null);
         Dbg.Assert(Context is not null);
-        TruncatedOutput = false;
+        base.ProcessRecord();
 
         try
         {
@@ -53,22 +53,19 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
     private TreeGroup GetFirstTreeGroup(GroupPrincipal group)
     {
-        if (!Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+        TreeGroup treeGroup = new(group.DistinguishedName, group);
+        if (Cache.TryGet(group.DistinguishedName, out TreeGroup? _))
         {
-            return new(group.DistinguishedName, group);
+            treeGroup.LinkCachedChildren(Cache);
         }
 
-        treeGroup = (TreeGroup)treeGroup.Clone();
-        treeGroup.Hook(Cache);
         return treeGroup;
     }
 
     private TreeObjectBase[] Traverse(GroupPrincipal groupPrincipal)
     {
-        Index.Clear();
         int depth;
         string source = groupPrincipal.DistinguishedName;
-        HashSet<string> visited = [];
         Push(groupPrincipal, GetFirstTreeGroup(groupPrincipal));
 
         while (Stack.Count > 0)
@@ -81,14 +78,13 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             if (!Cache.TryAdd(treeGroup))
             {
                 // if it's a circular reference, go next
-                if (TreeCache.IsCircular(treeGroup))
+                if (treeGroup.SetIfCircularNested())
                 {
-                    treeGroup.SetCircularNested();
                     continue;
                 }
 
                 // else, if we want to show all nodes OR this node was not yet visited
-                if (ShowAll || !visited.Add(treeGroup.DistinguishedName))
+                if (ShowAll || IsNotVisited(treeGroup))
                 {
                     // reconstruct the output without querying AD again
                     EnumerateMembers(treeGroup, depth);
@@ -107,51 +103,6 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
 
         return Index.GetTree();
-    }
-
-    private TreeObjectBase ProcessPrincipal(
-        Principal principal,
-        TreeGroup parent,
-        string source,
-        int depth)
-    {
-        return principal switch
-        {
-            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
-            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
-            GroupPrincipal group => HandleGroup(parent, group, source, depth),
-            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
-        };
-
-        TreeObjectBase AddTreeObject(TreeObjectBase obj)
-        {
-            if (depth <= Depth)
-            {
-                Index.AddPrincipal(obj);
-            }
-
-            return obj;
-        }
-
-        TreeObjectBase HandleGroup(
-            TreeGroup parent,
-            GroupPrincipal group,
-            string source,
-            int depth)
-        {
-            if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
-            {
-                TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
-                cloned.Hook(Cache);
-                Push(null, cloned);
-                group.Dispose();
-                return treeGroup;
-            }
-
-            treeGroup = new TreeGroup(source, parent, group, depth);
-            Push(group, treeGroup);
-            return treeGroup;
-        }
     }
 
     private void EnumerateMembers(
@@ -224,6 +175,51 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             {
                 Index.Add(member.Clone(parent, depth));
             }
+        }
+    }
+
+    private TreeObjectBase ProcessPrincipal(
+        Principal principal,
+        TreeGroup parent,
+        string source,
+        int depth)
+    {
+        return principal switch
+        {
+            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
+            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
+            GroupPrincipal group => ProcessGroup(parent, group, source, depth),
+            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
+        };
+
+        TreeObjectBase AddTreeObject(TreeObjectBase obj)
+        {
+            if (depth <= Depth)
+            {
+                Index.AddPrincipal(obj);
+            }
+
+            return obj;
+        }
+
+        TreeObjectBase ProcessGroup(
+            TreeGroup parent,
+            GroupPrincipal group,
+            string source,
+            int depth)
+        {
+            if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+            {
+                TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
+                cloned.LinkCachedChildren(Cache);
+                Push(null, cloned);
+                group.Dispose();
+                return treeGroup;
+            }
+
+            treeGroup = new TreeGroup(source, parent, group, depth);
+            Push(group, treeGroup);
+            return treeGroup;
         }
     }
 }

@@ -14,7 +14,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private const string VTReset = "\x1B[0m";
 
-    private List<TreeObjectBase> _children = [];
+    private List<TreeObjectBase> _children;
 
     public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
 
@@ -22,7 +22,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private TreeGroup(
         TreeGroup group,
-        TreeGroup? parent,
+        TreeGroup parent,
         int depth)
         : base(group, parent, depth)
     {
@@ -33,7 +33,9 @@ public sealed class TreeGroup : TreeObjectBase
         string source,
         GroupPrincipal group)
         : base(source, group)
-    { }
+    {
+        _children = [];
+    }
 
     internal TreeGroup(
         string source,
@@ -41,20 +43,48 @@ public sealed class TreeGroup : TreeObjectBase
         GroupPrincipal group,
         int depth)
         : base(source, parent, group, depth)
-    { }
-
-    internal void SetCircularNested()
     {
-        IsCircular = true;
-        Hierarchy = $"{Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, VTBrightRed)}{Circular}{VTReset}";
+        _children = [];
     }
 
-    internal void SetProcessed() => Hierarchy = string.Concat(Hierarchy, Processed);
+    private bool IsCircularNested()
+    {
+        if (Parent is null)
+        {
+            return false;
+        }
 
-    internal void Hook(TreeCache cache) => _children = cache[DistinguishedName]._children;
+        TreeGroup? current = Parent;
+        while (current is not null)
+        {
+            if (DistinguishedName == current.DistinguishedName)
+            {
+                return true;
+            }
+
+            current = current.Parent;
+        }
+
+        return false;
+    }
+
+    internal bool SetIfCircularNested()
+    {
+        IsCircular = IsCircularNested();
+        if (IsCircular)
+        {
+            Hierarchy = $"{Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, VTBrightRed)}{Circular}{VTReset}";
+        }
+
+        return IsCircular;
+    }
+
+    internal void SetProcessed() => Hierarchy = $"{Hierarchy}{Processed}";
+
+    internal void LinkCachedChildren(TreeCache cache) => _children = cache[DistinguishedName]._children;
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
 
-    internal override TreeObjectBase Clone(TreeGroup? parent = null, int depth = 0)
+    internal override TreeObjectBase Clone(TreeGroup parent, int depth)
         => new TreeGroup(this, parent, depth);
 }
