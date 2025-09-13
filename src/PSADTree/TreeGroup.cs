@@ -14,6 +14,8 @@ public sealed class TreeGroup : TreeObjectBase
 
     private const string VTReset = "\x1B[0m";
 
+    private readonly bool _isCloned;
+
     private List<TreeObjectBase> _children;
 
     public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
@@ -26,7 +28,9 @@ public sealed class TreeGroup : TreeObjectBase
         int depth)
         : base(group, parent, depth)
     {
+        _isCloned = true;
         _children = group._children;
+        IsCircular = group.IsCircular;
     }
 
     internal TreeGroup(
@@ -49,6 +53,11 @@ public sealed class TreeGroup : TreeObjectBase
 
     private bool IsCircularNested()
     {
+        if (_isCloned)
+        {
+            return IsCircular;
+        }
+
         if (Parent is null)
         {
             return false;

@@ -76,7 +76,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
             foreach (Principal parent in groups)
             {
-                if (ShouldExclude(parent, ExclusionPatterns))
+                if (ShouldExclude(parent))
                 {
                     continue;
                 }
@@ -164,7 +164,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
         foreach (Principal group in groups)
         {
-            if (ShouldExclude(group, ExclusionPatterns))
+            if (ShouldExclude(group))
             {
                 continue;
             }

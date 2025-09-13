@@ -8,11 +8,11 @@ internal sealed class TreeBuilder
 
     private readonly List<TreeObjectBase> _output = [];
 
-    internal void AddPrincipal(TreeObjectBase principal) => _principals.Add(principal);
+    internal void Stage(TreeObjectBase principal) => _principals.Add(principal);
 
     internal void Add(TreeObjectBase principal) => _output.Add(principal);
 
-    internal void TryAddPrincipals()
+    internal void CommitStaged()
     {
         if (_principals.Count > 0)
         {

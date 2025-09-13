@@ -98,7 +98,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
             // else, group isn't cached query AD
             EnumerateMembers(treeGroup, current, source, depth);
-            Index.TryAddPrincipals();
+            Index.CommitStaged();
             current?.Dispose();
         }
 
@@ -141,7 +141,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
                     }
                 }
 
-                if (ShouldExclude(member, ExclusionPatterns))
+                if (ShouldExclude(member))
                 {
                     continue;
                 }
@@ -196,7 +196,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         {
             if (depth <= Depth)
             {
-                Index.AddPrincipal(obj);
+                Index.Stage(obj);
             }
 
             return obj;
