@@ -83,7 +83,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
                 GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
                 TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
-                Push(groupPrincipal, treeGroup);
+                PushToStack(groupPrincipal, treeGroup);
             }
         }
         catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
@@ -169,24 +169,8 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                 continue;
             }
 
-            TreeGroup treeGroup = ProcessGroup((GroupPrincipal)group);
+            TreeGroup treeGroup = ProcessGroup(parent, (GroupPrincipal)group, source, depth);
             parent.AddChild(treeGroup);
-        }
-
-        TreeGroup ProcessGroup(GroupPrincipal group)
-        {
-            if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
-            {
-                TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
-                cloned.LinkCachedChildren(Cache);
-                Push(group, cloned);
-                group.Dispose();
-                return treeGroup;
-            }
-
-            treeGroup = new(source, parent, group, depth);
-            Push(group, treeGroup);
-            return treeGroup;
         }
     }
 
@@ -200,7 +184,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         foreach (TreeObjectBase child in parent.Children)
         {
             TreeGroup group = (TreeGroup)child;
-            Push(null, (TreeGroup)group.Clone(parent, depth));
+            PushToStack(null, (TreeGroup)group.Clone(parent, depth));
         }
     }
 }

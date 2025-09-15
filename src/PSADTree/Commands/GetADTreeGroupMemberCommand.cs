@@ -66,7 +66,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         int depth;
         string source = groupPrincipal.DistinguishedName;
-        Push(groupPrincipal, GetFirstTreeGroup(groupPrincipal));
+        PushToStack(groupPrincipal, GetFirstTreeGroup(groupPrincipal));
 
         while (Stack.Count > 0)
         {
@@ -74,30 +74,16 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             depth = treeGroup.Depth + 1;
             Index.Add(treeGroup);
 
-            // if this node has been already processed
+            // if this group is already processed
             if (!Cache.TryAdd(treeGroup))
             {
-                // if it's a circular reference, go next
-                if (treeGroup.SetIfCircularNested())
-                {
-                    continue;
-                }
-
-                // else, if we want to show all nodes OR this node was not yet visited
-                if (ShowAll || IsNotVisited(treeGroup))
-                {
-                    // reconstruct the output without querying AD again
-                    EnumerateMembers(treeGroup, depth);
-                    continue;
-                }
-
-                // else, just skip this reference and go next
-                treeGroup.SetProcessed();
+                HandleCachedGroup(treeGroup, depth);
+                current?.Dispose();
                 continue;
             }
 
-            // else, group isn't cached query AD
-            EnumerateMembers(treeGroup, current, source, depth);
+            // else, group isn't cached so query AD
+            BuildMembersFromAD(treeGroup, current, source, depth);
             Index.CommitStaged();
             current?.Dispose();
         }
@@ -105,7 +91,27 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         return Index.GetTree();
     }
 
-    private void EnumerateMembers(
+    private void HandleCachedGroup(TreeGroup treeGroup, int depth)
+    {
+        // if it's a circular reference, nothing to do here
+        if (treeGroup.SetIfCircularNested())
+        {
+            return;
+        }
+
+        // else, if we want to show all nodes OR this node was not yet visited
+        if (ShowAll || IsNotVisited(treeGroup))
+        {
+            // reconstruct the output without querying AD again
+            BuildMembersFromCache(treeGroup, depth);
+            return;
+        }
+
+        // else, just skip this reference and go next
+        treeGroup.SetProcessed();
+    }
+
+    private void BuildMembersFromAD(
         TreeGroup parent,
         GroupPrincipal? group,
         string source,
@@ -126,33 +132,19 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             IDisposable? disposable = null;
             try
             {
-                if (member is { DistinguishedName: null })
+                if (member is { DistinguishedName: null } ||
+                    member.StructuralObjectClass != "group" && Group.IsPresent ||
+                    ShouldExclude(member))
                 {
                     disposable = member;
                     continue;
                 }
 
-                if (member.StructuralObjectClass != "group")
-                {
-                    disposable = member;
-                    if (Group.IsPresent)
-                    {
-                        continue;
-                    }
-                }
-
-                if (ShouldExclude(member))
-                {
-                    continue;
-                }
-
-                TreeObjectBase treeObject = ProcessPrincipal(
+                ProcessPrincipal(
                     principal: member,
                     parent: parent,
                     source: source,
                     depth: depth);
-
-                parent.AddChild(treeObject);
             }
             finally
             {
@@ -161,13 +153,13 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    private void EnumerateMembers(TreeGroup parent, int depth)
+    private void BuildMembersFromCache(TreeGroup parent, int depth)
     {
         foreach (TreeObjectBase member in parent.Children)
         {
             if (member is TreeGroup treeGroup)
             {
-                Push(null, (TreeGroup)treeGroup.Clone(parent, depth));
+                PushToStack(null, (TreeGroup)treeGroup.Clone(parent, depth));
                 continue;
             }
 
@@ -178,19 +170,21 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    private TreeObjectBase ProcessPrincipal(
+    private void ProcessPrincipal(
         Principal principal,
         TreeGroup parent,
         string source,
         int depth)
     {
-        return principal switch
+        TreeObjectBase treeObject = principal switch
         {
             UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
             ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
             GroupPrincipal group => ProcessGroup(parent, group, source, depth),
             _ => throw new ArgumentOutOfRangeException(nameof(principal)),
         };
+
+        parent.AddChild(treeObject);
 
         TreeObjectBase AddTreeObject(TreeObjectBase obj)
         {
@@ -200,26 +194,6 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             }
 
             return obj;
-        }
-
-        TreeObjectBase ProcessGroup(
-            TreeGroup parent,
-            GroupPrincipal group,
-            string source,
-            int depth)
-        {
-            if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
-            {
-                TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
-                cloned.LinkCachedChildren(Cache);
-                Push(null, cloned);
-                group.Dispose();
-                return treeGroup;
-            }
-
-            treeGroup = new TreeGroup(source, parent, group, depth);
-            Push(group, treeGroup);
-            return treeGroup;
         }
     }
 }

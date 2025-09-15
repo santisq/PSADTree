@@ -53,6 +53,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private bool IsCircularNested()
     {
+        // there is no need to check again if the object is cloned
         if (_isCloned)
         {
             return IsCircular;
@@ -79,8 +80,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal bool SetIfCircularNested()
     {
-        IsCircular = IsCircularNested();
-        if (IsCircular)
+        if (IsCircular = IsCircularNested())
         {
             Hierarchy = $"{Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, VTBrightRed)}{Circular}{VTReset}";
         }
@@ -90,7 +90,10 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void SetProcessed() => Hierarchy = $"{Hierarchy}{Processed}";
 
-    internal void LinkCachedChildren(TreeCache cache) => _children = cache[DistinguishedName]._children;
+    internal void LinkCachedChildren(TreeCache cache)
+    {
+        _children = cache[DistinguishedName]._children;
+    }
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
 

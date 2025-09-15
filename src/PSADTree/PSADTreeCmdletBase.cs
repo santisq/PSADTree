@@ -104,7 +104,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         _truncatedOutput = false;
     }
 
-    protected void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
+    protected void PushToStack(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
         if (treeGroup.Depth > Depth)
         {
@@ -117,6 +117,25 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
 
         Stack.Push((groupPrincipal, treeGroup));
+    }
+
+    protected TreeGroup ProcessGroup(
+            TreeGroup parent,
+            GroupPrincipal group,
+            string source,
+            int depth)
+    {
+        if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+        {
+            TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
+            cloned.LinkCachedChildren(Cache);
+            PushToStack(group, cloned);
+            return treeGroup;
+        }
+
+        treeGroup = new TreeGroup(source, parent, group, depth);
+        PushToStack(group, treeGroup);
+        return treeGroup;
     }
 
     protected void DisplayWarningIfTruncatedOutput()
