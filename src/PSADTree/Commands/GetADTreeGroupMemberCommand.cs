@@ -54,8 +54,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     private TreeGroup GetFirstTreeGroup(GroupPrincipal group)
     {
         TreeGroup treeGroup = new(group.DistinguishedName, group);
+        // if the first group is cached
         if (Cache.TryGet(group.DistinguishedName, out TreeGroup? _))
         {
+            // link the children and build from cached path,
+            // no need to query AD at all!
             treeGroup.LinkCachedChildren(Cache);
         }
 
