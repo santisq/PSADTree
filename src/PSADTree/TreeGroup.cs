@@ -14,7 +14,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private const string VTReset = "\x1B[0m";
 
-    private readonly bool _isCloned;
+    private bool _isLinked;
 
     private List<TreeObjectBase> _children;
 
@@ -28,7 +28,7 @@ public sealed class TreeGroup : TreeObjectBase
         int depth)
         : base(group, parent, depth)
     {
-        _isCloned = true;
+        _isLinked = true;
         _children = group._children;
         IsCircular = group.IsCircular;
     }
@@ -54,7 +54,7 @@ public sealed class TreeGroup : TreeObjectBase
     private bool IsCircularNested()
     {
         // there is no need to check again if the object is cloned
-        if (_isCloned)
+        if (_isLinked)
         {
             return IsCircular;
         }
@@ -93,6 +93,7 @@ public sealed class TreeGroup : TreeObjectBase
     internal void LinkCachedChildren(TreeCache cache)
     {
         _children = cache[DistinguishedName]._children;
+        _isLinked = true;
     }
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
