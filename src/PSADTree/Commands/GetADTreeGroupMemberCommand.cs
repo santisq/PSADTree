@@ -18,41 +18,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     [Parameter]
     public SwitchParameter Group { get; set; }
 
-    protected override void ProcessRecord()
+    protected override Principal GetFirstPrincipal() => GroupPrincipal.FindByIdentity(Context, Identity);
+
+    protected override void HandleFirstPrincipal(Principal principal)
     {
-        Dbg.Assert(Identity is not null);
-        Dbg.Assert(Context is not null);
-        base.ProcessRecord();
-
-        try
-        {
-            using GroupPrincipal? group = GroupPrincipal.FindByIdentity(Context, Identity);
-            if (group is null)
-            {
-                WriteError(Identity.ToIdentityNotFound());
-                return;
-            }
-
-            TreeObjectBase[] result = Traverse(group);
-            DisplayWarningIfTruncatedOutput();
-            WriteObject(sendToPipeline: result, enumerateCollection: true);
-        }
-        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
-        {
-            throw;
-        }
-        catch (MultipleMatchesException exception)
-        {
-            WriteError(exception.ToAmbiguousIdentity(Identity));
-        }
-        catch (Exception exception)
-        {
-            WriteError(exception.ToUnspecified(Identity));
-        }
-    }
-
-    private TreeGroup GetFirstTreeGroup(GroupPrincipal group)
-    {
+        GroupPrincipal group = (GroupPrincipal)principal;
         TreeGroup treeGroup = new(group.DistinguishedName, group);
         // if the first group is cached
         if (Cache.TryGet(group.DistinguishedName, out TreeGroup? _))
@@ -62,70 +32,16 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
             treeGroup.LinkCachedChildren(Cache);
         }
 
-        return treeGroup;
+        PushToStack(group, treeGroup);
     }
 
-    private TreeObjectBase[] Traverse(GroupPrincipal groupPrincipal)
-    {
-        int depth;
-        string source = groupPrincipal.DistinguishedName;
-        PushToStack(groupPrincipal, GetFirstTreeGroup(groupPrincipal));
-
-        while (Stack.Count > 0)
-        {
-            (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
-            depth = treeGroup.Depth + 1;
-            Index.Add(treeGroup);
-
-            // if this group is already processed
-            if (!Cache.TryAdd(treeGroup))
-            {
-                HandleCachedGroup(treeGroup, depth);
-                current?.Dispose();
-                continue;
-            }
-
-            // else, group isn't cached so query AD
-            BuildMembersFromAD(treeGroup, current, source, depth);
-            Index.CommitStaged();
-            current?.Dispose();
-        }
-
-        return Index.GetTree();
-    }
-
-    private void HandleCachedGroup(TreeGroup treeGroup, int depth)
-    {
-        // if it's a circular reference, nothing to do here
-        if (treeGroup.SetIfCircularNested())
-        {
-            return;
-        }
-
-        // else, if we want to show all nodes OR this node was not yet visited
-        if (ShowAll || IsNotVisited(treeGroup))
-        {
-            // reconstruct the output without querying AD again
-            BuildMembersFromCache(treeGroup, depth);
-            return;
-        }
-
-        // else, just skip this reference and go next
-        treeGroup.SetProcessed();
-    }
-
-    private void BuildMembersFromAD(
+    protected override void BuildFromAD(
         TreeGroup parent,
-        GroupPrincipal? group,
+        GroupPrincipal groupPrincipal,
         string source,
         int depth)
     {
-        if (group is null)
-        {
-            return;
-        }
-
-        IEnumerable<Principal> members = group.ToSafeSortedEnumerable(
+        IEnumerable<Principal> members = groupPrincipal.ToSafeSortedEnumerable(
             selector: group => group.GetMembers(),
             cmdlet: this,
             comparer: Comparer);
@@ -156,7 +72,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    private void BuildMembersFromCache(TreeGroup parent, int depth)
+    protected override void BuildFromCache(TreeGroup parent, int depth)
     {
         foreach (TreeObjectBase member in parent.Children)
         {
@@ -168,7 +84,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
             if (depth <= Depth)
             {
-                Index.Add(member.Clone(parent, depth));
+                Builder.Add(member.Clone(parent, depth));
             }
         }
     }
@@ -193,7 +109,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         {
             if (depth <= Depth)
             {
-                Index.Stage(obj);
+                Builder.Stage(obj);
             }
 
             return obj;

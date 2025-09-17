@@ -26,11 +26,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected PrincipalContext? Context { get; set; }
 
-    protected Stack<(GroupPrincipal? group, TreeGroup treeGroup)> Stack { get; } = new();
+    protected Stack<(GroupPrincipal? group, TreeGroup treeObject)> Stack { get; } = new();
 
     internal TreeCache Cache { get; } = new();
 
-    internal TreeBuilder Index { get; } = new();
+    internal TreeBuilder Builder { get; } = new();
 
     internal PSADTreeComparer Comparer { get; } = new();
 
@@ -95,14 +95,98 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
     }
 
-    protected bool IsNotVisited(TreeGroup group) => _visited.Add(group.DistinguishedName);
-
     protected override void ProcessRecord()
     {
-        Index.Clear();
+        Builder.Clear();
         _visited.Clear();
         _truncatedOutput = false;
+
+        try
+        {
+            using Principal? principal = GetFirstPrincipal();
+            if (principal is null)
+            {
+                WriteError(Identity.ToIdentityNotFound());
+                return;
+            }
+
+            HandleFirstPrincipal(principal);
+            TreeObjectBase[] result = Traverse(principal.DistinguishedName);
+            DisplayWarningIfTruncatedOutput();
+            WriteObject(sendToPipeline: result, enumerateCollection: true);
+        }
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
+        {
+            throw;
+        }
+        catch (MultipleMatchesException exception)
+        {
+            WriteError(exception.ToAmbiguousIdentity(Identity));
+        }
+        catch (Exception exception)
+        {
+            WriteError(exception.ToUnspecified(Identity));
+        }
     }
+
+    protected abstract Principal GetFirstPrincipal();
+
+    protected abstract void HandleFirstPrincipal(Principal principal);
+
+    private bool IsNotVisited(TreeGroup group) => _visited.Add(group.DistinguishedName);
+
+    private TreeObjectBase[] Traverse(string source)
+    {
+        int depth;
+        while (Stack.Count > 0)
+        {
+            (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
+            depth = treeGroup.Depth + 1;
+            Builder.Add(treeGroup);
+
+            // if this group is already cached
+            if (!Cache.TryAdd(treeGroup))
+            {
+                current?.Dispose();
+                // if it's a circular reference, nothing to do here
+                if (treeGroup.SetIfCircularNested())
+                {
+                    continue;
+                }
+
+                // else, if we want to show all nodes OR this node was not yet visited
+                if (ShowAll || IsNotVisited(treeGroup))
+                {
+                    // reconstruct the output without querying AD again
+                    BuildFromCache(treeGroup, depth);
+                    continue;
+                }
+
+                // else, just skip this reference and go next
+                treeGroup.SetProcessed();
+                continue;
+            }
+
+            if (current is not null)
+            {
+                // else, group isn't cached so query AD
+                BuildFromAD(treeGroup, current, source, depth);
+            }
+
+            Builder.CommitStaged();
+            current?.Dispose();
+        }
+
+        return Builder.GetTree();
+    }
+
+    protected abstract void BuildFromAD(
+        TreeGroup parent,
+        GroupPrincipal groupPrincipal,
+        string source,
+        int depth);
+
+    protected abstract void BuildFromCache(TreeGroup parent, int depth);
 
     protected void PushToStack(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
