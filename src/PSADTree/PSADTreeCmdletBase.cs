@@ -171,10 +171,9 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             {
                 // else, group isn't cached so query AD
                 BuildFromAD(treeGroup, current, source, depth);
+                Builder.CommitStaged();
+                current.Dispose();
             }
-
-            Builder.CommitStaged();
-            current?.Dispose();
         }
 
         return Builder.GetTree();
@@ -204,10 +203,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     }
 
     protected TreeGroup ProcessGroup(
-            TreeGroup parent,
-            GroupPrincipal group,
-            string source,
-            int depth)
+        TreeGroup parent,
+        GroupPrincipal group,
+        string source,
+        int depth)
     {
         if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
         {
