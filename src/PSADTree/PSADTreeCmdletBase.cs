@@ -16,6 +16,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private WildcardPattern[]? _exclusionPatterns;
 
+    private readonly TreeCache _cache = new();
+
     private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
@@ -27,8 +29,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     protected PrincipalContext? Context { get; set; }
 
     protected Stack<(GroupPrincipal? group, TreeGroup treeObject)> Stack { get; } = new();
-
-    internal TreeCache Cache { get; } = new();
 
     internal TreeBuilder Builder { get; } = new();
 
@@ -145,9 +145,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             Builder.Add(treeGroup);
 
             // if this group is already cached
-            if (!Cache.TryAdd(treeGroup))
+            if (!_cache.TryAdd(treeGroup))
             {
                 current?.Dispose();
+                treeGroup.LinkCachedChildren(_cache);
                 // if it's a circular reference, nothing to do here
                 if (treeGroup.SetIfCircularNested())
                 {
@@ -208,10 +209,9 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         string source,
         int depth)
     {
-        if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+        if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
         {
             TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
-            cloned.LinkCachedChildren(Cache);
             PushToStack(group, cloned);
             return treeGroup;
         }

@@ -23,16 +23,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     protected override void HandleFirstPrincipal(Principal principal)
     {
         GroupPrincipal group = (GroupPrincipal)principal;
-        TreeGroup treeGroup = new(group.DistinguishedName, group);
-        // if the first group is cached
-        if (Cache.TryGet(group.DistinguishedName, out TreeGroup? _))
-        {
-            // link the children and build from cached path,
-            // no need to query AD at all!
-            treeGroup.LinkCachedChildren(Cache);
-        }
-
-        PushToStack(group, treeGroup);
+        PushToStack(group, new(group.DistinguishedName, group));
     }
 
     protected override void BuildFromAD(

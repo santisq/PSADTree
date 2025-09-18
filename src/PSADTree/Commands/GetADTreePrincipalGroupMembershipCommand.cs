@@ -19,25 +19,12 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
     protected override void HandleFirstPrincipal(Principal principal)
     {
-        TreeGroup LinkIfCached(TreeGroup treeGroup)
-        {
-            // if the first group is cached
-            if (Cache.TryGet(treeGroup.DistinguishedName, out TreeGroup? _))
-            {
-                // link the children and build from cached path,
-                // no need to query AD at all!
-                treeGroup.LinkCachedChildren(Cache);
-            }
-
-            return treeGroup;
-        }
-
         string source = principal.DistinguishedName;
         TreeObjectBase treeObject = principal switch
         {
             UserPrincipal user => new TreeUser(source, user),
             ComputerPrincipal computer => new TreeComputer(source, computer),
-            GroupPrincipal group => LinkIfCached(new TreeGroup(source, group)),
+            GroupPrincipal group => new TreeGroup(source, group),
             _ => throw new ArgumentOutOfRangeException(nameof(principal))
         };
 

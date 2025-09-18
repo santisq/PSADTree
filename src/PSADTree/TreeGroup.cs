@@ -53,7 +53,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     private bool IsCircularNested()
     {
-        // there is no need to check again if the object is cloned
+        // there is no need to check again if the object is linked
         if (_isLinked)
         {
             return IsCircular;
@@ -92,8 +92,13 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void LinkCachedChildren(TreeCache cache)
     {
-        _children = cache[DistinguishedName]._children;
-        _isLinked = true;
+        if (!_isLinked)
+        {
+            TreeGroup cached = cache[DistinguishedName];
+            _children = cached._children;
+            _isLinked = true;
+            IsCircular = cached.IsCircular;
+        }
     }
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
