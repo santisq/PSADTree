@@ -22,8 +22,10 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 
     protected override void HandleFirstPrincipal(Principal principal)
     {
-        GroupPrincipal group = (GroupPrincipal)principal;
-        PushToStack(group, new(group.DistinguishedName, group));
+        if (principal is GroupPrincipal group && !ShouldExclude(principal))
+        {
+            PushToStack(group, new(group.DistinguishedName, group));
+        }
     }
 
     protected override void BuildFromAD(

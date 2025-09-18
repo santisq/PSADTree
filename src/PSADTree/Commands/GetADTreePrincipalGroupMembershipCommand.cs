@@ -20,31 +20,50 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     protected override void HandleFirstPrincipal(Principal principal)
     {
         string source = principal.DistinguishedName;
-        TreeObjectBase treeObject = principal switch
+        switch (principal)
         {
-            UserPrincipal user => new TreeUser(source, user),
-            ComputerPrincipal computer => new TreeComputer(source, computer),
-            GroupPrincipal group => new TreeGroup(source, group),
-            _ => throw new ArgumentOutOfRangeException(nameof(principal))
-        };
+            case UserPrincipal user:
+                HandleOther(new TreeUser(source, user), principal);
+                break;
 
-        Builder.Add(treeObject);
+            case ComputerPrincipal computer:
+                HandleOther(new TreeComputer(source, computer), principal);
+                break;
 
-        IEnumerable<Principal> principalMembership = principal.ToSafeSortedEnumerable(
-            selector: principal => principal.GetGroups(Context),
-            cmdlet: this,
-            comparer: Comparer);
+            case GroupPrincipal group:
+                HandleGroup(new TreeGroup(source, group), group);
+                break;
 
-        foreach (Principal parent in principalMembership)
+            default:
+                throw new ArgumentOutOfRangeException(nameof(principal));
+        }
+
+        void HandleGroup(TreeGroup treeGroup, GroupPrincipal groupPrincipal)
         {
-            if (ShouldExclude(parent))
+            if (!ShouldExclude(groupPrincipal))
             {
-                continue;
+                PushToStack(groupPrincipal, treeGroup);
             }
+        }
 
-            GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
-            TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
-            PushToStack(groupPrincipal, treeGroup);
+        void HandleOther(TreeObjectBase treeObject, Principal principal)
+        {
+            Builder.Add(treeObject);
+
+            IEnumerable<Principal> principalMembership = principal.ToSafeSortedEnumerable(
+                selector: principal => principal.GetGroups(Context),
+                cmdlet: this,
+                comparer: Comparer);
+
+            foreach (Principal parent in principalMembership)
+            {
+                if (!ShouldExclude(parent))
+                {
+                    GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
+                    TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
+                    PushToStack(groupPrincipal, treeGroup);
+                }
+            }
         }
     }
 
