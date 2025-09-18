@@ -6,15 +6,17 @@ namespace PSADTree;
 
 public sealed class TreeGroup : TreeObjectBase
 {
-    private const string Circular = " ↔ Circular Reference";
+    private const string Circular = $" ↔ {VTBrightRed}Circular Reference{VTReset}";
 
-    private const string Processed = " ↔ Processed Group";
+    private const string Processed = $" ↔ {VTBrightYellow}Processed Group{VTReset}";
 
     private const string VTBrightRed = "\x1B[91m";
 
+    private const string VTBrightYellow = "\x1B[93m";
+
     private const string VTReset = "\x1B[0m";
 
-    private bool _isLinked;
+    public bool IsLinked { get; private set; }
 
     private List<TreeObjectBase> _children;
 
@@ -25,17 +27,16 @@ public sealed class TreeGroup : TreeObjectBase
     private TreeGroup(
         TreeGroup group,
         TreeGroup parent,
+        string source,
         int depth)
-        : base(group, parent, depth)
+        : base(group, parent, source, depth)
     {
-        _isLinked = true;
+        IsLinked = true;
         _children = group._children;
         IsCircular = group.IsCircular;
     }
 
-    internal TreeGroup(
-        string source,
-        GroupPrincipal group)
+    internal TreeGroup(string source, GroupPrincipal group)
         : base(source, group)
     {
         _children = [];
@@ -53,26 +54,23 @@ public sealed class TreeGroup : TreeObjectBase
 
     private bool IsCircularNested()
     {
-        // there is no need to check again if the object is linked
-        if (_isLinked)
-        {
-            return IsCircular;
-        }
+        // // there is no need to check again if the object is linked
+        // if (IsLinked)
+        // {
+        //     return IsCircular;
+        // }
 
         if (Parent is null)
         {
             return false;
         }
 
-        TreeGroup? current = Parent;
-        while (current is not null)
+        for (TreeGroup? parent = Parent; parent is not null; parent = parent.Parent)
         {
-            if (DistinguishedName == current.DistinguishedName)
+            if (DistinguishedName == parent.DistinguishedName)
             {
                 return true;
             }
-
-            current = current.Parent;
         }
 
         return false;
@@ -82,7 +80,7 @@ public sealed class TreeGroup : TreeObjectBase
     {
         if (IsCircular = IsCircularNested())
         {
-            Hierarchy = $"{Hierarchy.Insert(Hierarchy.IndexOf("─ ") + 2, VTBrightRed)}{Circular}{VTReset}";
+            Hierarchy = $"{Hierarchy}{Circular}";
         }
 
         return IsCircular;
@@ -92,17 +90,14 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void LinkCachedChildren(TreeCache cache)
     {
-        if (!_isLinked)
-        {
-            TreeGroup cached = cache[DistinguishedName];
-            _children = cached._children;
-            _isLinked = true;
-            IsCircular = cached.IsCircular;
-        }
+        TreeGroup cached = cache[DistinguishedName];
+        _children = cached._children;
+        IsLinked = true;
+        IsCircular = cached.IsCircular;
     }
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth)
-        => new TreeGroup(this, parent, depth);
+    internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)
+        => new TreeGroup(this, parent, source, depth);
 }

@@ -65,19 +65,19 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    protected override void BuildFromCache(TreeGroup parent, int depth)
+    protected override void BuildFromCache(TreeGroup parent, string source, int depth)
     {
         foreach (TreeObjectBase member in parent.Children)
         {
             if (member is TreeGroup treeGroup)
             {
-                PushToStack(null, (TreeGroup)treeGroup.Clone(parent, depth));
+                PushToStack(null, (TreeGroup)treeGroup.Clone(parent, source, depth));
                 continue;
             }
 
             if (depth <= Depth)
             {
-                Builder.Add(member.Clone(parent, depth));
+                Builder.Add(member.Clone(parent, source, depth));
             }
         }
     }

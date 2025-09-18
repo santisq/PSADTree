@@ -90,7 +90,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         }
     }
 
-    protected override void BuildFromCache(TreeGroup parent, int depth)
+    protected override void BuildFromCache(TreeGroup parent, string source, int depth)
     {
         if (depth > Depth)
         {
@@ -100,7 +100,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         foreach (TreeObjectBase child in parent.Children)
         {
             TreeGroup group = (TreeGroup)child;
-            PushToStack(null, (TreeGroup)group.Clone(parent, depth));
+            PushToStack(null, (TreeGroup)group.Clone(parent, source, depth));
         }
     }
 }

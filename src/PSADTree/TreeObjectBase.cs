@@ -35,10 +35,11 @@ public abstract class TreeObjectBase
     protected TreeObjectBase(
         TreeObjectBase treeObject,
         TreeGroup? parent,
+        string source,
         int depth)
     {
         Depth = depth;
-        Source = treeObject.Source;
+        Source = source;
         SamAccountName = treeObject.SamAccountName;
         Domain = treeObject.Domain;
         ObjectClass = treeObject.ObjectClass;
@@ -52,9 +53,7 @@ public abstract class TreeObjectBase
         DisplayName = treeObject.DisplayName;
     }
 
-    protected TreeObjectBase(
-        string source,
-        Principal principal)
+    protected TreeObjectBase(string source, Principal principal)
     {
         Source = source;
         SamAccountName = principal.SamAccountName;
@@ -83,5 +82,5 @@ public abstract class TreeObjectBase
 
     public override string ToString() => DistinguishedName;
 
-    internal abstract TreeObjectBase Clone(TreeGroup parent, int depth);
+    internal abstract TreeObjectBase Clone(TreeGroup parent, string source, int depth);
 }

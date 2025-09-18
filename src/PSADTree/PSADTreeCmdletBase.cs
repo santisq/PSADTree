@@ -12,6 +12,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private bool _truncatedOutput;
 
+    private bool _canceled;
+
     private readonly HashSet<string> _visited = [];
 
     private WildcardPattern[]? _exclusionPatterns;
@@ -133,12 +135,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected abstract void HandleFirstPrincipal(Principal principal);
 
-    private bool IsNotVisited(TreeGroup group) => _visited.Add(group.DistinguishedName);
-
     private TreeObjectBase[] Traverse(string source)
     {
         int depth;
-        while (Stack.Count > 0)
+        while (Stack.Count > 0 && !_canceled)
         {
             (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
             depth = treeGroup.Depth + 1;
@@ -147,8 +147,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             // if this group is already cached
             if (!Cache.TryAdd(treeGroup))
             {
-                treeGroup.LinkCachedChildren(Cache);
                 current?.Dispose();
+                treeGroup.LinkCachedChildren(Cache);
                 // if it's a circular reference, nothing to do here
                 if (treeGroup.SetIfCircularNested())
                 {
@@ -156,10 +156,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
                 }
 
                 // else, if we want to show all nodes OR this node was not yet visited
-                if (ShowAll || IsNotVisited(treeGroup))
+                if (ShowAll || _visited.Add(treeGroup.DistinguishedName))
                 {
                     // reconstruct the output without querying AD again
-                    BuildFromCache(treeGroup, depth);
+                    BuildFromCache(treeGroup, source, depth);
                     continue;
                 }
 
@@ -172,6 +172,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             {
                 // else, group isn't cached so query AD
                 BuildFromAD(treeGroup, current, source, depth);
+                _visited.Add(treeGroup.DistinguishedName);
                 Builder.CommitStaged();
                 current.Dispose();
             }
@@ -186,7 +187,10 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         string source,
         int depth);
 
-    protected abstract void BuildFromCache(TreeGroup parent, int depth);
+    protected abstract void BuildFromCache(
+        TreeGroup parent,
+        string source,
+        int depth);
 
     protected void PushToStack(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
     {
@@ -211,7 +215,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
         {
-            TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, depth);
+            TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, source, depth);
             PushToStack(group, cloned);
             return treeGroup;
         }
@@ -231,6 +235,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     protected bool ShouldExclude(Principal principal) =>
         _exclusionPatterns?.Any(pattern => pattern.IsMatch(principal.SamAccountName)) ?? false;
+
+    protected override void StopProcessing() => _canceled = true;
 
     protected virtual void Dispose(bool disposing)
     {
