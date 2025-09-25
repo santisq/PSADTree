@@ -8,6 +8,7 @@ namespace PSADTree;
 public abstract class TreeObjectBase
 {
     public int Depth { get; set; }
+    internal int Depth { get; }
 
     internal string Source { get; }
 
