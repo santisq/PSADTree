@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
+using PSADTree.Extensions;
 
 namespace PSADTree.Commands;
 

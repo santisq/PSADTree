@@ -1,12 +1,13 @@
 using System;
 using System.DirectoryServices.AccountManagement;
 using System.Security.Principal;
+using PSADTree.Extensions;
 
 namespace PSADTree;
 
 public abstract class TreeObjectBase
 {
-    internal int Depth { get; set; }
+    public int Depth { get; set; }
 
     internal string Source { get; }
 

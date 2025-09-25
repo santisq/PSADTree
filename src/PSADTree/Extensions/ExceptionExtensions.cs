@@ -2,9 +2,9 @@ using System;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
 
-namespace PSADTree;
+namespace PSADTree.Extensions;
 
-internal static class Exceptions
+internal static class ExceptionExtensions
 {
     internal static ErrorRecord ToIdentityNotFound(this string? identity) =>
         new(

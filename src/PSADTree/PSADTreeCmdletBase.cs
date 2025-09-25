@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
+using PSADTree.Extensions;
 
 namespace PSADTree;
 

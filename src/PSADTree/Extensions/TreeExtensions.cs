@@ -10,7 +10,7 @@ using System.Text;
 #endif
 using System.Text.RegularExpressions;
 
-namespace PSADTree;
+namespace PSADTree.Extensions;
 
 internal static class TreeExtensions
 {
