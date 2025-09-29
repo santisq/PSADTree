@@ -1,36 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
+using PSADTree.Extensions;
 
 namespace PSADTree;
 
+[EditorBrowsable(EditorBrowsableState.Never)]
 public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 {
+    private bool _disposed;
+
+    private bool _truncatedOutput;
+
+    private bool _canceled;
+
+    private readonly HashSet<string> _visited = [];
+
+    private WildcardPattern[]? _exclusionPatterns;
+
+    private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
+        | WildcardOptions.CultureInvariant
+        | WildcardOptions.IgnoreCase;
+
     protected const string DepthParameterSet = "Depth";
 
     protected const string RecursiveParameterSet = "Recursive";
 
-    protected PrincipalContext? _context;
+    protected PrincipalContext? Context { get; set; }
 
-    private bool _disposed;
+    protected Stack<(GroupPrincipal? group, TreeGroup treeObject)> Stack { get; } = new();
 
-    protected bool _truncatedOutput;
+    internal TreeCache Cache { get; } = new();
 
-    protected readonly Stack<(GroupPrincipal? group, TreeGroup treeGroup)> _stack = new();
+    internal TreeBuilder Builder { get; } = new();
 
-    internal readonly TreeCache _cache = new();
-
-    internal readonly TreeIndex _index = new();
-
-    internal PSADTreeComparer _comparer = new();
-
-    protected WildcardPattern[]? _exclusionPatterns;
-
-    private const WildcardOptions _wpoptions = WildcardOptions.Compiled
-        | WildcardOptions.CultureInvariant
-        | WildcardOptions.IgnoreCase;
+    internal PSADTreeComparer Comparer { get; } = new();
 
     [Parameter(
             Position = 0,
@@ -72,18 +79,16 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
             if (Exclude is not null)
             {
-                _exclusionPatterns = Exclude
-                    .Select(e => new WildcardPattern(e, _wpoptions))
-                    .ToArray();
+                _exclusionPatterns = [.. Exclude.Select(e => new WildcardPattern(e, WildcardPatternOptions))];
             }
 
             if (Credential is null)
             {
-                _context = new PrincipalContext(ContextType.Domain, Server);
+                Context = new PrincipalContext(ContextType.Domain, Server);
                 return;
             }
 
-            _context = new PrincipalContext(
+            Context = new PrincipalContext(
                 ContextType.Domain,
                 Server,
                 Credential.UserName,
@@ -91,11 +96,108 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
         catch (Exception exception)
         {
-            ThrowTerminatingError(exception.SetPrincipalContext());
+            ThrowTerminatingError(exception.ToSetPrincipalContext());
         }
     }
 
-    protected void Push(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
+    protected override void ProcessRecord()
+    {
+        Builder.Clear();
+        _visited.Clear();
+        _truncatedOutput = false;
+
+        try
+        {
+            using Principal? principal = GetFirstPrincipal();
+            if (principal is null)
+            {
+                WriteError(Identity.ToIdentityNotFound());
+                return;
+            }
+
+            HandleFirstPrincipal(principal);
+            TreeObjectBase[] result = Traverse(principal.DistinguishedName);
+            DisplayWarningIfTruncatedOutput();
+            WriteObject(sendToPipeline: result, enumerateCollection: true);
+        }
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
+        {
+            throw;
+        }
+        catch (MultipleMatchesException exception)
+        {
+            WriteError(exception.ToAmbiguousIdentity(Identity));
+        }
+        catch (Exception exception)
+        {
+            WriteError(exception.ToUnspecified(Identity));
+        }
+    }
+
+    protected abstract Principal GetFirstPrincipal();
+
+    protected abstract void HandleFirstPrincipal(Principal principal);
+
+    private TreeObjectBase[] Traverse(string source)
+    {
+        int depth;
+        while (Stack.Count > 0 && !_canceled)
+        {
+            (GroupPrincipal? current, TreeGroup treeGroup) = Stack.Pop();
+            depth = treeGroup.Depth + 1;
+            Builder.Add(treeGroup);
+
+            // if this group is already cached
+            if (!Cache.TryAdd(treeGroup))
+            {
+                current?.Dispose();
+                treeGroup.LinkCachedChildren(Cache);
+                // if it's a circular reference, nothing to do here
+                if (treeGroup.SetIfCircularNested())
+                {
+                    continue;
+                }
+
+                // else, if we want to show all nodes OR this node was not yet visited
+                if (ShowAll || _visited.Add(treeGroup.DistinguishedName))
+                {
+                    // reconstruct the output without querying AD again
+                    BuildFromCache(treeGroup, source, depth);
+                    continue;
+                }
+
+                // else, just skip this reference and go next
+                treeGroup.SetProcessed();
+                continue;
+            }
+
+            if (current is not null)
+            {
+                // else, group isn't cached so query AD
+                BuildFromAD(treeGroup, current, source, depth);
+                _visited.Add(treeGroup.DistinguishedName);
+                Builder.CommitStaged();
+                current.Dispose();
+            }
+        }
+
+        return Builder.GetTree();
+    }
+
+    protected abstract void BuildFromAD(
+        TreeGroup parent,
+        GroupPrincipal groupPrincipal,
+        string source,
+        int depth);
+
+    protected abstract void BuildFromCache(
+        TreeGroup parent,
+        string source,
+        int depth);
+
+    protected void PushToStack(
+        TreeGroup treeGroup,
+        GroupPrincipal? groupPrincipal = null)
     {
         if (treeGroup.Depth > Depth)
         {
@@ -107,7 +209,25 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             _truncatedOutput = true;
         }
 
-        _stack.Push((groupPrincipal, treeGroup));
+        Stack.Push((groupPrincipal, treeGroup));
+    }
+
+    protected TreeGroup ProcessGroup(
+        TreeGroup parent,
+        GroupPrincipal group,
+        string source,
+        int depth)
+    {
+        if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
+        {
+            TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, source, depth);
+            PushToStack(cloned, group);
+            return treeGroup;
+        }
+
+        treeGroup = new TreeGroup(source, parent, group, depth);
+        PushToStack(treeGroup, group);
+        return treeGroup;
     }
 
     protected void DisplayWarningIfTruncatedOutput()
@@ -118,46 +238,18 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         }
     }
 
-    private static bool MatchAny(
-        Principal principal,
-        WildcardPattern[] patterns)
-    {
-        foreach (WildcardPattern pattern in patterns)
-        {
-            if (pattern.IsMatch(principal.SamAccountName))
-            {
-                return true;
-            }
-        }
+    protected bool ShouldExclude(Principal principal) =>
+        _exclusionPatterns?.Any(pattern => pattern.IsMatch(principal.SamAccountName)) ?? false;
 
-        return false;
-    }
-
-    protected static bool ShouldExclude(
-        Principal principal,
-        WildcardPattern[]? patterns)
-    {
-        if (patterns is null)
-        {
-            return false;
-        }
-
-        return MatchAny(principal, patterns);
-    }
+    protected override void StopProcessing() => _canceled = true;
 
     protected virtual void Dispose(bool disposing)
     {
         if (disposing && !_disposed)
         {
-            _context?.Dispose();
+            Context?.Dispose();
             _disposed = true;
         }
-    }
-
-    protected void Clear()
-    {
-        _index.Clear();
-        _cache.Clear();
     }
 
     public void Dispose()

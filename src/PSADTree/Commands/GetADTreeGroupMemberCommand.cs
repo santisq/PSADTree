@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Management.Automation;
+using PSADTree.Extensions;
 
 namespace PSADTree.Commands;
 
@@ -17,150 +19,46 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     [Parameter]
     public SwitchParameter Group { get; set; }
 
-    protected override void ProcessRecord()
+    protected override Principal GetFirstPrincipal() => GroupPrincipal.FindByIdentity(Context, Identity);
+
+    protected override void HandleFirstPrincipal(Principal principal)
     {
-        Dbg.Assert(Identity is not null);
-        Dbg.Assert(_context is not null);
-        _truncatedOutput = false;
-
-        try
+        if (principal is GroupPrincipal group && !ShouldExclude(principal))
         {
-            using GroupPrincipal? group = GroupPrincipal.FindByIdentity(_context, Identity);
-            if (group is null)
-            {
-                WriteError(Exceptions.IdentityNotFound(Identity));
-                return;
-            }
-
-            TreeObjectBase[] result = Traverse(
-                groupPrincipal: group,
-                source: group.DistinguishedName);
-
-            DisplayWarningIfTruncatedOutput();
-            WriteObject(sendToPipeline: result, enumerateCollection: true);
-        }
-        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
-        {
-            throw;
-        }
-        catch (MultipleMatchesException exception)
-        {
-            WriteError(exception.AmbiguousIdentity(Identity));
-        }
-        catch (Exception exception)
-        {
-            WriteError(exception.Unspecified(Identity));
+            string source = group.DistinguishedName;
+            PushToStack(new TreeGroup(source, group), group);
         }
     }
 
-    private TreeObjectBase[] Traverse(
-        GroupPrincipal groupPrincipal,
-        string source)
-    {
-        int depth;
-        Clear();
-        Push(groupPrincipal, new TreeGroup(source, groupPrincipal));
-
-        while (_stack.Count > 0)
-        {
-            (GroupPrincipal? current, TreeGroup treeGroup) = _stack.Pop();
-
-            try
-            {
-                depth = treeGroup.Depth + 1;
-
-                // if this node has been already processed
-                if (!_cache.TryAdd(treeGroup))
-                {
-                    current?.Dispose();
-                    treeGroup.Hook(_cache);
-                    _index.Add(treeGroup);
-
-                    // if it's a circular reference, go next
-                    if (TreeCache.IsCircular(treeGroup))
-                    {
-                        treeGroup.SetCircularNested();
-                        continue;
-                    }
-
-                    // else, if we want to show all nodes
-                    if (ShowAll.IsPresent)
-                    {
-                        // reconstruct the output without querying AD again
-                        EnumerateMembers(treeGroup, depth);
-                        continue;
-                    }
-
-                    // else, just skip this reference and go next
-                    treeGroup.SetProcessed();
-                    continue;
-                }
-
-                using PrincipalSearchResult<Principal>? search = current?.GetMembers();
-
-                if (search is not null)
-                {
-                    EnumerateMembers(treeGroup, search, source, depth);
-                }
-
-                _index.Add(treeGroup);
-                _index.TryAddPrincipals();
-                current?.Dispose();
-            }
-            catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
-            {
-                throw;
-            }
-            catch (Exception exception)
-            {
-                WriteError(exception.EnumerationFailure(current));
-            }
-        }
-
-        return _index.GetTree();
-    }
-
-    private void EnumerateMembers(
+    protected override void BuildFromAD(
         TreeGroup parent,
-        PrincipalSearchResult<Principal> searchResult,
+        GroupPrincipal groupPrincipal,
         string source,
         int depth)
     {
-        foreach (Principal member in searchResult.GetSortedEnumerable(_comparer))
+        IEnumerable<Principal> members = groupPrincipal.ToSafeSortedEnumerable(
+            selector: group => group.GetMembers(),
+            cmdlet: this,
+            comparer: Comparer);
+
+        foreach (Principal member in members)
         {
             IDisposable? disposable = null;
             try
             {
-                if (member is { DistinguishedName: null })
+                if (member is { DistinguishedName: null } ||
+                    member.StructuralObjectClass != "group" && Group.IsPresent ||
+                    ShouldExclude(member))
                 {
                     disposable = member;
                     continue;
                 }
 
-                if (member.StructuralObjectClass != "group")
-                {
-                    disposable = member;
-                    if (Group.IsPresent)
-                    {
-                        continue;
-                    }
-                }
-
-                if (ShouldExclude(member, _exclusionPatterns))
-                {
-                    continue;
-                }
-
-                TreeObjectBase treeObject = ProcessPrincipal(
+                ProcessPrincipal(
                     principal: member,
                     parent: parent,
                     source: source,
                     depth: depth);
-
-                if (ShowAll.IsPresent)
-                {
-                    parent.AddChild(treeObject);
-                }
             }
             finally
             {
@@ -169,62 +67,47 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         }
     }
 
-    private TreeObjectBase ProcessPrincipal(
-        Principal principal,
-        TreeGroup parent,
-        string source,
-        int depth)
+    protected override void BuildFromCache(TreeGroup parent, string source, int depth)
     {
-        return principal switch
-        {
-            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
-            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
-            GroupPrincipal group => HandleGroup(parent, group, source, depth),
-            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
-        };
-
-        TreeObjectBase AddTreeObject(TreeObjectBase obj)
-        {
-            if (depth <= Depth)
-            {
-                _index.AddPrincipal(obj);
-            }
-
-            return obj;
-        }
-
-        TreeObjectBase HandleGroup(
-            TreeGroup parent,
-            GroupPrincipal group,
-            string source,
-            int depth)
-        {
-            if (_cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
-            {
-                Push(group, (TreeGroup)treeGroup.Clone(parent, depth));
-                return treeGroup;
-            }
-
-            treeGroup = new TreeGroup(source, parent, group, depth);
-            Push(group, treeGroup);
-            return treeGroup;
-        }
-    }
-
-    private void EnumerateMembers(TreeGroup parent, int depth)
-    {
-        foreach (TreeObjectBase member in parent.Childs)
+        foreach (TreeObjectBase member in parent.Children)
         {
             if (member is TreeGroup treeGroup)
             {
-                Push(null, (TreeGroup)treeGroup.Clone(parent, depth));
+                PushToStack((TreeGroup)treeGroup.Clone(parent, source, depth));
                 continue;
             }
 
             if (depth <= Depth)
             {
-                _index.Add(member.Clone(parent, depth));
+                Builder.Add(member.Clone(parent, source, depth));
             }
+        }
+    }
+
+    private void ProcessPrincipal(
+        Principal principal,
+        TreeGroup parent,
+        string source,
+        int depth)
+    {
+        TreeObjectBase treeObject = principal switch
+        {
+            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
+            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
+            GroupPrincipal group => ProcessGroup(parent, group, source, depth),
+            _ => throw new ArgumentOutOfRangeException(nameof(principal)),
+        };
+
+        parent.AddChild(treeObject);
+
+        TreeObjectBase AddTreeObject(TreeObjectBase obj)
+        {
+            if (depth <= Depth)
+            {
+                Builder.Stage(obj);
+            }
+
+            return obj;
         }
     }
 }

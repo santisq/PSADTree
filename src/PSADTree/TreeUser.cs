@@ -7,8 +7,9 @@ public sealed class TreeUser : TreeObjectBase
     private TreeUser(
         TreeUser user,
         TreeGroup parent,
+        string source,
         int depth)
-        : base(user, parent, depth)
+        : base(user, parent, source, depth)
     { }
 
     internal TreeUser(
@@ -19,12 +20,10 @@ public sealed class TreeUser : TreeObjectBase
         : base(source, parent, user, depth)
     { }
 
-    internal TreeUser(
-        string source,
-        UserPrincipal user)
+    internal TreeUser(string source, UserPrincipal user)
         : base(source, user)
     { }
 
-    internal override TreeObjectBase Clone(TreeGroup parent, int depth) =>
-        new TreeUser(this, parent, depth);
+    internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)
+        => new TreeUser(this, parent, source, depth);
 }
