@@ -25,7 +25,8 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         if (principal is GroupPrincipal group && !ShouldExclude(principal))
         {
-            PushToStack(group, new(group.DistinguishedName, group));
+            string source = group.DistinguishedName;
+            PushToStack(new TreeGroup(source, group), group);
         }
     }
 
@@ -72,7 +73,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         {
             if (member is TreeGroup treeGroup)
             {
-                PushToStack(null, (TreeGroup)treeGroup.Clone(parent, source, depth));
+                PushToStack((TreeGroup)treeGroup.Clone(parent, source, depth));
                 continue;
             }
 

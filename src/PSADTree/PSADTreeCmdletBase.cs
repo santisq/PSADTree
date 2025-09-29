@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
@@ -7,6 +8,7 @@ using PSADTree.Extensions;
 
 namespace PSADTree;
 
+[EditorBrowsable(EditorBrowsableState.Never)]
 public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 {
     private bool _disposed;
@@ -193,7 +195,9 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         string source,
         int depth);
 
-    protected void PushToStack(GroupPrincipal? groupPrincipal, TreeGroup treeGroup)
+    protected void PushToStack(
+        TreeGroup treeGroup,
+        GroupPrincipal? groupPrincipal = null)
     {
         if (treeGroup.Depth > Depth)
         {
@@ -217,12 +221,12 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
         if (Cache.TryGet(group.DistinguishedName, out TreeGroup? treeGroup))
         {
             TreeGroup cloned = (TreeGroup)treeGroup.Clone(parent, source, depth);
-            PushToStack(group, cloned);
+            PushToStack(cloned, group);
             return treeGroup;
         }
 
         treeGroup = new TreeGroup(source, parent, group, depth);
-        PushToStack(group, treeGroup);
+        PushToStack(treeGroup, group);
         return treeGroup;
     }
 

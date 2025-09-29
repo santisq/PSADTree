@@ -80,10 +80,7 @@ public sealed class TreeGroup : TreeObjectBase
     internal void SetProcessed() => Hierarchy = $"{Hierarchy}{Processed}";
 
     internal void LinkCachedChildren(TreeCache cache)
-    {
-        TreeGroup cached = cache[DistinguishedName];
-        _children = cached._children;
-    }
+        => _children = cache[DistinguishedName]._children;
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
 

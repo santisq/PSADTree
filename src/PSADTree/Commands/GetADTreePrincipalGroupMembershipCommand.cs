@@ -43,7 +43,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         {
             if (!ShouldExclude(groupPrincipal))
             {
-                PushToStack(groupPrincipal, treeGroup);
+                PushToStack(treeGroup, groupPrincipal);
             }
         }
 
@@ -62,7 +62,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
                 {
                     GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
                     TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
-                    PushToStack(groupPrincipal, treeGroup);
+                    PushToStack(treeGroup, groupPrincipal);
                 }
             }
         }
@@ -101,7 +101,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         foreach (TreeObjectBase child in parent.Children)
         {
             TreeGroup group = (TreeGroup)child;
-            PushToStack(null, (TreeGroup)group.Clone(parent, source, depth));
+            PushToStack((TreeGroup)group.Clone(parent, source, depth));
         }
     }
 }
