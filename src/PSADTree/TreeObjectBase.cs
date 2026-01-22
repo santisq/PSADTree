@@ -97,7 +97,9 @@ public abstract class TreeObjectBase
             return null;
         }
 
-        Dictionary<string, object?> additionalProperties = [];
+        Dictionary<string, object?> additionalProperties = new(
+            capacity: Properties.Length,
+            StringComparer.OrdinalIgnoreCase);
 
         foreach (string property in Properties)
         {
@@ -111,10 +113,11 @@ public abstract class TreeObjectBase
             {
                 additionalProperties[property] = entry.Properties[property][0];
             }
-
         }
 
-        return new ReadOnlyDictionary<string, object?>(additionalProperties);
+        return additionalProperties.Count == 0
+            ? null
+            : new ReadOnlyDictionary<string, object?>(additionalProperties);
     }
 
     private static ActiveDirectorySecurity? GetAcl(DirectoryEntry entry)
