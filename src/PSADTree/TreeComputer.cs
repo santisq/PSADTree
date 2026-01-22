@@ -16,12 +16,13 @@ public sealed class TreeComputer : TreeObjectBase
         string source,
         TreeGroup? parent,
         ComputerPrincipal computer,
+        string[]? properties,
         int depth)
-        : base(source, parent, computer, depth)
+        : base(source, parent, computer, properties, depth)
     { }
 
-    internal TreeComputer(string source, ComputerPrincipal computer)
-        : base(source, computer)
+    internal TreeComputer(string source, ComputerPrincipal computer, string[]? properties)
+        : base(source, computer, properties)
     { }
 
     internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)

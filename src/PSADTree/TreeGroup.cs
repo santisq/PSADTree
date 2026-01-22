@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using PSADTree.Extensions;
 
 namespace PSADTree;
 
@@ -18,6 +20,10 @@ public sealed class TreeGroup : TreeObjectBase
 
     private List<TreeObjectBase> _children;
 
+    public UserAccountControl UserAccountControl { get; private set; }
+
+    public bool Enabled { get; private set; }
+
     public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
 
     public bool IsCircular { get; private set; }
@@ -29,12 +35,14 @@ public sealed class TreeGroup : TreeObjectBase
         int depth)
         : base(group, parent, source, depth)
     {
+        UserAccountControl = group.UserAccountControl;
+        Enabled = group.Enabled;
         _children = group._children;
         IsCircular = group.IsCircular;
     }
 
-    internal TreeGroup(string source, GroupPrincipal group)
-        : base(source, group)
+    internal TreeGroup(string source, GroupPrincipal group, string[]? properties)
+        : base(source, group, properties)
     {
         _children = [];
     }
@@ -43,8 +51,9 @@ public sealed class TreeGroup : TreeObjectBase
         string source,
         TreeGroup? parent,
         GroupPrincipal group,
+        string[]? properties,
         int depth)
-        : base(source, parent, group, depth)
+        : base(source, parent, group, properties, depth)
     {
         _children = [];
     }
@@ -83,6 +92,12 @@ public sealed class TreeGroup : TreeObjectBase
         => _children = cache[DistinguishedName]._children;
 
     internal void AddChild(TreeObjectBase child) => _children.Add(child);
+
+    internal void SetUserAccountControl(DirectoryEntry entry)
+    {
+        UserAccountControl = entry.GetProperty<UserAccountControl>("userAccountControl");
+        Enabled = !UserAccountControl.HasFlag(UserAccountControl.ACCOUNTDISABLE);
+    }
 
     internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)
         => new TreeGroup(this, parent, source, depth);

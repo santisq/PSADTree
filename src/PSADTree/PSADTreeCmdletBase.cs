@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
@@ -67,6 +69,9 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     [Parameter]
     [SupportsWildcards]
     public string[]? Exclude { get; set; }
+
+    [Parameter]
+    public string[]? Properties { get; set; }
 
     protected override void BeginProcessing()
     {
@@ -225,7 +230,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             return treeGroup;
         }
 
-        treeGroup = new TreeGroup(source, parent, group, depth);
+        treeGroup = new TreeGroup(source, parent, group, Properties, depth);
         PushToStack(treeGroup, group);
         return treeGroup;
     }
