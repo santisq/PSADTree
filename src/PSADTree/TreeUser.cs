@@ -25,12 +25,12 @@ public sealed class TreeUser : TreeObjectBase
         string source,
         TreeGroup? parent,
         UserPrincipal user,
-        string[]? properties,
+        string[] properties,
         int depth)
         : base(source, parent, user, properties, depth)
     { }
 
-    internal TreeUser(string source, UserPrincipal user, string[]? properties)
+    internal TreeUser(string source, UserPrincipal user, string[] properties)
         : base(source, user, properties)
     { }
 

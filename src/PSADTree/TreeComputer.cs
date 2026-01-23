@@ -16,12 +16,12 @@ public sealed class TreeComputer : TreeObjectBase
         string source,
         TreeGroup? parent,
         ComputerPrincipal computer,
-        string[]? properties,
+        string[] properties,
         int depth)
         : base(source, parent, computer, properties, depth)
     { }
 
-    internal TreeComputer(string source, ComputerPrincipal computer, string[]? properties)
+    internal TreeComputer(string source, ComputerPrincipal computer, string[] properties)
         : base(source, computer, properties)
     { }
 

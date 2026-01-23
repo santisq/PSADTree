@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
-using System.Linq;
 using System.Security.Principal;
 using PSADTree.Extensions;
 
@@ -61,7 +58,7 @@ public abstract class TreeObjectBase
         AdditionalProperties = treeObject.AdditionalProperties;
     }
 
-    protected TreeObjectBase(string source, Principal principal, string[]? properties)
+    protected TreeObjectBase(string source, Principal principal, string[] properties)
     {
         Source = source;
         SamAccountName = principal.SamAccountName;
@@ -74,106 +71,20 @@ public abstract class TreeObjectBase
         UserPrincipalName = principal.UserPrincipalName;
         Description = principal.Description;
         DisplayName = principal.DisplayName;
-        AdditionalProperties = GetAdditionalProperties(principal.GetDirectoryEntry(), properties);
+        AdditionalProperties = principal.GetAdditionalProperties(properties);
     }
 
     protected TreeObjectBase(
         string source,
         TreeGroup? parent,
         Principal principal,
-        string[]? properties,
+        string[] properties,
         int depth)
         : this(source, principal, properties)
     {
         Depth = depth;
         Hierarchy = principal.SamAccountName.Indent(depth);
         Parent = parent;
-    }
-
-    private ReadOnlyDictionary<string, object?>? GetAdditionalProperties(
-        DirectoryEntry entry,
-        string[]? Properties)
-    {
-        if (Properties is null or { Length: 0 })
-        {
-            return null;
-        }
-
-        if (Properties.Any(e => e == "*"))
-        {
-            return GetAllAttributes(entry);
-        }
-
-        Dictionary<string, object?> additionalProperties = new(
-            capacity: Properties.Length,
-            StringComparer.OrdinalIgnoreCase);
-
-        foreach (string property in Properties)
-        {
-            if (!LdapMap.Instance.TryGetValue(property, out string? ldapDn))
-            {
-                ldapDn = property;
-            }
-
-            if (ldapDn.Equals("nTSecurityDescriptor", StringComparison.OrdinalIgnoreCase))
-            {
-                additionalProperties[property] = GetAcl(entry);
-                continue;
-            }
-
-            if (entry.Properties.Contains(ldapDn))
-            {
-                additionalProperties[property] = entry.Properties[ldapDn].Value;
-            }
-        }
-
-        return additionalProperties.Count == 0
-            ? null
-            : new ReadOnlyDictionary<string, object?>(additionalProperties);
-    }
-
-    private ReadOnlyDictionary<string, object?> GetAllAttributes(DirectoryEntry entry)
-    {
-        Dictionary<string, object?> additionalProperties = new(
-            capacity: entry.Properties.Count,
-            StringComparer.OrdinalIgnoreCase);
-
-        foreach (string property in entry.Properties.PropertyNames)
-        {
-            if (property.Equals("nTSecurityDescriptor", StringComparison.OrdinalIgnoreCase))
-            {
-                additionalProperties[property] = GetAcl(entry);
-                continue;
-            }
-
-            additionalProperties[property] = entry.Properties[property].Value;
-        }
-
-        return new ReadOnlyDictionary<string, object?>(additionalProperties);
-    }
-
-    private static ActiveDirectorySecurity? GetAcl(DirectoryEntry entry)
-    {
-        using DirectorySearcher searcher = new(entry, null, ["nTSecurityDescriptor"])
-        {
-            SecurityMasks = SecurityMasks.Group | SecurityMasks.Owner | SecurityMasks.Dacl
-        };
-
-        SearchResult? result = searcher.FindOne();
-
-        if (result is null)
-        {
-            return null;
-        }
-
-        if (!result.TryGetProperty("nTSecurityDescriptor", out byte[]? descriptor))
-        {
-            return null;
-        }
-
-        ActiveDirectorySecurity acl = new();
-        acl.SetSecurityDescriptorBinaryForm(descriptor);
-        return acl;
     }
 
     public override string ToString() => DistinguishedName;

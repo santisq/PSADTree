@@ -21,6 +21,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private WildcardPattern[]? _exclusionPatterns;
 
+    private string[]? _properties;
+
     private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
@@ -70,7 +72,11 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     [Parameter]
     [ArgumentCompleter(typeof(LdapCompleter))]
-    public string[]? Properties { get; set; }
+    public string[] Properties
+    {
+        get => _properties ??= [];
+        set => _properties = [.. _properties.Where(e => !string.IsNullOrWhiteSpace(e))];
+    }
 
     protected override void BeginProcessing()
     {
