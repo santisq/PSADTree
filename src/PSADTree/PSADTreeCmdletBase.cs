@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
@@ -71,6 +69,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string[]? Exclude { get; set; }
 
     [Parameter]
+    [ArgumentCompleter(typeof(LdapCompleter))]
     public string[]? Properties { get; set; }
 
     protected override void BeginProcessing()

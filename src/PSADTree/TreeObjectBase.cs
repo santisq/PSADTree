@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using System.Linq;
 using System.Security.Principal;
 using PSADTree.Extensions;
 
@@ -57,6 +58,7 @@ public abstract class TreeObjectBase
         UserPrincipalName = treeObject.UserPrincipalName;
         Description = treeObject.Description;
         DisplayName = treeObject.DisplayName;
+        AdditionalProperties = treeObject.AdditionalProperties;
     }
 
     protected TreeObjectBase(string source, Principal principal, string[]? properties)
@@ -97,11 +99,46 @@ public abstract class TreeObjectBase
             return null;
         }
 
+        if (Properties.Any(e => e == "*"))
+        {
+            return GetAllAttributes(entry);
+        }
+
         Dictionary<string, object?> additionalProperties = new(
             capacity: Properties.Length,
             StringComparer.OrdinalIgnoreCase);
 
         foreach (string property in Properties)
+        {
+            if (!LdapMap.Instance.TryGetValue(property, out string? ldapDn))
+            {
+                ldapDn = property;
+            }
+
+            if (ldapDn.Equals("nTSecurityDescriptor", StringComparison.OrdinalIgnoreCase))
+            {
+                additionalProperties[property] = GetAcl(entry);
+                continue;
+            }
+
+            if (entry.Properties.Contains(ldapDn))
+            {
+                additionalProperties[property] = entry.Properties[ldapDn].Value;
+            }
+        }
+
+        return additionalProperties.Count == 0
+            ? null
+            : new ReadOnlyDictionary<string, object?>(additionalProperties);
+    }
+
+    private ReadOnlyDictionary<string, object?> GetAllAttributes(DirectoryEntry entry)
+    {
+        Dictionary<string, object?> additionalProperties = new(
+            capacity: entry.Properties.Count,
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (string property in entry.Properties.PropertyNames)
         {
             if (property.Equals("nTSecurityDescriptor", StringComparison.OrdinalIgnoreCase))
             {
@@ -109,15 +146,10 @@ public abstract class TreeObjectBase
                 continue;
             }
 
-            if (entry.Properties.Contains(property))
-            {
-                additionalProperties[property] = entry.Properties[property][0];
-            }
+            additionalProperties[property] = entry.Properties[property].Value;
         }
 
-        return additionalProperties.Count == 0
-            ? null
-            : new ReadOnlyDictionary<string, object?>(additionalProperties);
+        return new ReadOnlyDictionary<string, object?>(additionalProperties);
     }
 
     private static ActiveDirectorySecurity? GetAcl(DirectoryEntry entry)
