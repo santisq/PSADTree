@@ -10,10 +10,7 @@ namespace PSADTree.Commands;
     VerbsCommon.Get, "ADTreeGroupMember",
     DefaultParameterSetName = DepthParameterSet)]
 [Alias("treegroupmember")]
-[OutputType(
-    typeof(TreeGroup),
-    typeof(TreeUser),
-    typeof(TreeComputer))]
+[OutputType(typeof(TreeGroup), typeof(TreeUser), typeof(TreeComputer))]
 public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 {
     [Parameter]

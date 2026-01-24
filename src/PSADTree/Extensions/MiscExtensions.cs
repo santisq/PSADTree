@@ -137,6 +137,11 @@ internal static class MiscExtensions
     internal static UserAccountControl? GetUserAccountControl(this AuthenticablePrincipal principal)
     {
         DirectoryEntry entry = principal.GetDirectoryEntry();
-        return (UserAccountControl?)entry.Properties["userAccountControl"]?.Value;
+        object? uac = entry.Properties["userAccountControl"]?.Value;
+        if (uac is null) return null;
+        return (UserAccountControl)Convert.ToUInt32(uac);
     }
+
+    internal static bool IsEnabled(this UserAccountControl uac)
+        => !uac.HasFlag(UserAccountControl.ACCOUNTDISABLE);
 }

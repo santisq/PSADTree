@@ -10,10 +10,7 @@ namespace PSADTree.Commands;
     VerbsCommon.Get, "ADTreePrincipalGroupMembership",
     DefaultParameterSetName = DepthParameterSet)]
 [Alias("treeprincipalmembership")]
-[OutputType(
-    typeof(TreeGroup),
-    typeof(TreeUser),
-    typeof(TreeComputer))]
+[OutputType(typeof(TreeGroup), typeof(TreeUser), typeof(TreeComputer))]
 public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBase
 {
     protected override Principal GetFirstPrincipal() => Principal.FindByIdentity(Context, Identity);

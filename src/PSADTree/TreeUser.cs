@@ -7,7 +7,7 @@ public sealed class TreeUser : TreeObjectBase
 {
     public UserAccountControl? UserAccountControl { get; }
 
-    public bool? Enabled { get; private set; }
+    public bool? Enabled { get; }
 
     private TreeUser(
         TreeUser user,
@@ -29,14 +29,14 @@ public sealed class TreeUser : TreeObjectBase
         : base(source, parent, user, properties, depth)
     {
         UserAccountControl = user.GetUserAccountControl();
-        Enabled = !UserAccountControl?.HasFlag(PSADTree.UserAccountControl.ACCOUNTDISABLE);
+        Enabled = UserAccountControl?.IsEnabled();
     }
 
     internal TreeUser(string source, UserPrincipal user, string[] properties)
         : base(source, user, properties)
     {
         UserAccountControl = user.GetUserAccountControl();
-        Enabled = !UserAccountControl?.HasFlag(PSADTree.UserAccountControl.ACCOUNTDISABLE);
+        Enabled = UserAccountControl?.IsEnabled();
     }
 
     internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)

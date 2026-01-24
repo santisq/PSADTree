@@ -29,14 +29,14 @@ public sealed class TreeComputer : TreeObjectBase
         : base(source, parent, computer, properties, depth)
     {
         UserAccountControl = computer.GetUserAccountControl();
-        Enabled = !UserAccountControl?.HasFlag(PSADTree.UserAccountControl.ACCOUNTDISABLE);
+        Enabled = UserAccountControl?.IsEnabled();
     }
 
     internal TreeComputer(string source, ComputerPrincipal computer, string[] properties)
         : base(source, computer, properties)
     {
         UserAccountControl = computer.GetUserAccountControl();
-        Enabled = !UserAccountControl?.HasFlag(PSADTree.UserAccountControl.ACCOUNTDISABLE);
+        Enabled = UserAccountControl?.IsEnabled();
     }
 
     internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)
