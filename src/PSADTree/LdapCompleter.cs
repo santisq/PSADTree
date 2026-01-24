@@ -14,7 +14,7 @@ public sealed class LdapCompleter : IArgumentCompleter
         CommandAst commandAst,
         IDictionary fakeBoundParameters)
     {
-        foreach (string key in LdapMap.Instance.Keys)
+        foreach (string key in LdapMap.Keys)
         {
             if (key.StartsWith(wordToComplete, System.StringComparison.OrdinalIgnoreCase))
             {
@@ -22,7 +22,7 @@ public sealed class LdapCompleter : IArgumentCompleter
                     key,
                     key,
                     CompletionResultType.ParameterValue,
-                    $"LDAP DisplayName: {LdapMap.Instance[key]}");
+                    $"LDAP DisplayName: {LdapMap.Get(key)}");
             }
         }
     }

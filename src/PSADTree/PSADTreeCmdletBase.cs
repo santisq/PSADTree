@@ -75,7 +75,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string[] Properties
     {
         get => _properties ??= [];
-        set => _properties = [.. _properties.Where(e => !string.IsNullOrWhiteSpace(e))];
+        set => _properties = [.. value.Where(e => !string.IsNullOrWhiteSpace(e))];
     }
 
     protected override void BeginProcessing()

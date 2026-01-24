@@ -6,6 +6,9 @@ using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using System.Text;
 
 namespace PSADTree.Extensions;
 
@@ -48,21 +51,27 @@ internal static class MiscExtensions
 
         foreach (string property in properties)
         {
-            if (!LdapMap.Instance.TryGetValue(property, out string? ldapDn))
+            if (!LdapMap.TryGetValue(property, out string? ldapDn))
             {
                 ldapDn = property;
             }
 
             if (IsSecurityDescriptor(property))
             {
-                additionalProperties[property] = GetAcl(entry);
+                additionalProperties[property] = entry.GetAcl();
                 continue;
             }
 
-            if (entry.Properties.Contains(ldapDn))
+            object? value = entry.Properties[ldapDn]?.Value;
+
+            if (value is null) continue;
+            if (IsIAdsLargeInteger(value, out long? fileTime))
             {
-                additionalProperties[property] = entry.Properties[ldapDn].Value;
+                additionalProperties[property] = fileTime;
+                continue;
             }
+
+            additionalProperties[property] = value;
         }
 
         return additionalProperties is { Count: 0 } ? null : new(additionalProperties);
@@ -82,27 +91,60 @@ internal static class MiscExtensions
                 continue;
             }
 
-            additionalProperties[property] = entry.Properties[property].Value;
+            object? value = entry.Properties[property]?.Value;
+
+            if (value is null) continue;
+            if (IsIAdsLargeInteger(value, out long? fileTime))
+            {
+                additionalProperties[property] = fileTime;
+                continue;
+            }
+
+            additionalProperties[property] = value;
         }
 
         return new(additionalProperties);
     }
 
-    private static ActiveDirectorySecurity? GetAcl(this DirectoryEntry entry)
+    private static PSObject GetAcl(this DirectoryEntry entry)
     {
-        using DirectorySearcher searcher = new(entry, null, ["nTSecurityDescriptor"])
-        {
-            SecurityMasks = SecurityMasks.Group | SecurityMasks.Owner | SecurityMasks.Dacl
-        };
+        Type target = typeof(NTAccount);
+        ActiveDirectorySecurity acl = entry.ObjectSecurity;
+        AuthorizationRuleCollection rules = acl.GetAccessRules(true, true, target);
+        return PSObject.AsPSObject(acl)
+            .AddProperty("Path", entry.Path)
+            .AddProperty("Owner", acl.GetOwner(target))
+            .AddProperty("Group", acl.GetGroup(target))
+            .AddProperty("Sddl", acl.GetSecurityDescriptorSddlForm(AccessControlSections.All))
+            .AddProperty("Access", rules)
+            .AddProperty("AccessToString", rules.GetAccessToString());
+    }
 
-        SearchResult? result = searcher.FindOne();
+    private static PSObject AddProperty(this PSObject pSObject, string name, object? value)
+    {
+        pSObject.Properties.Add(new PSNoteProperty(name, value));
+        return pSObject;
+    }
 
-        if (result is null || !result.TryGetProperty("nTSecurityDescriptor", out byte[]? descriptor))
-            return null;
+    private static string GetAccessToString(this AuthorizationRuleCollection rules)
+    {
+        StringBuilder builder = new();
+        foreach (ActiveDirectoryAccessRule rule in rules)
+            builder.AppendLine($"{rule.IdentityReference} {rule.AccessControlType}");
 
-        ActiveDirectorySecurity acl = new();
-        acl.SetSecurityDescriptorBinaryForm(descriptor);
-        return acl;
+        return builder.ToString();
+    }
+
+    private static bool IsIAdsLargeInteger(
+        object value,
+        [NotNullWhen(true)] out long? fileTime)
+    {
+        fileTime = default;
+        if (value is not IAdsLargeInteger largeInt)
+            return false;
+
+        fileTime = (largeInt.HighPart << 32) + largeInt.LowPart;
+        return true;
     }
 
     private static bool IsSecurityDescriptor(string ldapDn)

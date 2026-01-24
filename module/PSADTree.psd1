@@ -9,14 +9,14 @@
 @{
     # Script module or binary module file associated with this manifest.
     RootModule         = if ($PSEdition -eq 'Core') {
-        'bin/net6.0/PSADTree.dll'
+        'bin/net8.0-windows/PSADTree.dll'
     }
     else {
         'bin/net472/PSADTree.dll'
     }
 
     # Version number of this module.
-    ModuleVersion      = '1.1.6'
+    ModuleVersion      = '1.2.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
