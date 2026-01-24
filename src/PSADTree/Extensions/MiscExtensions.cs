@@ -14,22 +14,6 @@ namespace PSADTree.Extensions;
 
 internal static class MiscExtensions
 {
-    internal static T GetProperty<T>(
-        this DirectoryEntry entry,
-        string property)
-        => LanguagePrimitives.ConvertTo<T>(entry.Properties[property][0]);
-
-    internal static bool TryGetProperty<T>(
-        this SearchResult search,
-        string property,
-        [NotNullWhen(true)] out T? value)
-    {
-        value = default;
-        ResultPropertyValueCollection? toConvert = search.Properties[property];
-        return toConvert is not null and { Count: > 0 }
-            && LanguagePrimitives.TryConvertTo(toConvert, out value);
-    }
-
     internal static DirectoryEntry GetDirectoryEntry(this Principal principal)
         => (DirectoryEntry)principal.GetUnderlyingObject();
 
@@ -149,4 +133,10 @@ internal static class MiscExtensions
 
     private static bool IsSecurityDescriptor(string ldapDn)
         => ldapDn.Equals("nTSecurityDescriptor", StringComparison.OrdinalIgnoreCase);
+
+    internal static UserAccountControl? GetUserAccountControl(this AuthenticablePrincipal principal)
+    {
+        DirectoryEntry entry = principal.GetDirectoryEntry();
+        return (UserAccountControl?)entry.Properties["userAccountControl"]?.Value;
+    }
 }

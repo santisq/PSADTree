@@ -9,6 +9,6 @@ namespace PSADTree.Internal;
 public static class _FormattingInternals
 {
     [Hidden, EditorBrowsable(EditorBrowsableState.Never)]
-    public static string GetSource(TreeObjectBase treeObject) =>
-        treeObject.Source;
+    public static string GetSource(TreeObjectBase treeObject)
+        => treeObject.Source;
 }

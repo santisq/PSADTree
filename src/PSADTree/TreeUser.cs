@@ -1,4 +1,3 @@
-using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using PSADTree.Extensions;
 
@@ -6,9 +5,9 @@ namespace PSADTree;
 
 public sealed class TreeUser : TreeObjectBase
 {
-    public UserAccountControl UserAccountControl { get; private set; }
+    public UserAccountControl? UserAccountControl { get; }
 
-    public bool Enabled { get; private set; }
+    public bool? Enabled { get; private set; }
 
     private TreeUser(
         TreeUser user,
@@ -28,16 +27,16 @@ public sealed class TreeUser : TreeObjectBase
         string[] properties,
         int depth)
         : base(source, parent, user, properties, depth)
-    { }
+    {
+        UserAccountControl = user.GetUserAccountControl();
+        Enabled = !UserAccountControl?.HasFlag(PSADTree.UserAccountControl.ACCOUNTDISABLE);
+    }
 
     internal TreeUser(string source, UserPrincipal user, string[] properties)
         : base(source, user, properties)
-    { }
-
-    internal void SetUserAccountControl(DirectoryEntry entry)
     {
-        UserAccountControl = entry.GetProperty<UserAccountControl>("userAccountControl");
-        Enabled = !UserAccountControl.HasFlag(UserAccountControl.ACCOUNTDISABLE);
+        UserAccountControl = user.GetUserAccountControl();
+        Enabled = !UserAccountControl?.HasFlag(PSADTree.UserAccountControl.ACCOUNTDISABLE);
     }
 
     internal override TreeObjectBase Clone(TreeGroup parent, string source, int depth)
