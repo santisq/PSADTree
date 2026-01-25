@@ -106,7 +106,7 @@ internal static class MiscExtensions
 
     private static PSObject AddProperty(this PSObject pSObject, string name, object? value)
     {
-        pSObject.Properties.Add(new PSNoteProperty(name, value));
+        pSObject.Members.Add(new PSNoteProperty(name, value), preValidated: true);
         return pSObject;
     }
 

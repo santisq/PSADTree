@@ -6,7 +6,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>PSADTree</AssemblyName>
     <LangVersion>latest</LangVersion>
-    <NoWarn>CA1416;NU1605</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' != 'net472' ">
@@ -14,21 +13,15 @@
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' != 'net472' ">
-    <!-- <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0"
-      PrivateAssets="all" />
     <PackageReference Include="System.Management.Automation" Version="7.4.0" PrivateAssets="all" />
-    <PackageReference Include="System.DirectoryServices" Version="6.0.0" PrivateAssets="all" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="6.0.0"
-      PrivateAssets="all" /> -->
-    <PackageReference Include="System.DirectoryServices" Version="9.0.10" PrivateAssets="all" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="9.0.10" PrivateAssets="all" />
-    <PackageReference Include="System.Management.Automation" Version="7.4.0" PrivateAssets="all" />
+    <PackageReference Include="System.DirectoryServices" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="8.0.0" PrivateAssets="all" />
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" PrivateAssets="all" />
-    <Reference Include="System.DirectoryServices" Version="8.0.0" PrivateAssets="all" />
+    <Reference Include="System.DirectoryServices" PrivateAssets="all" />
     <Reference Include="System.DirectoryServices.AccountManagement" PrivateAssets="all" />
   </ItemGroup>
 
