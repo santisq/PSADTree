@@ -5,10 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
-using System.Management.Automation;
-using System.Security.AccessControl;
-using System.Security.Principal;
-using System.Text;
+using PSADTree.Internal;
 
 namespace PSADTree.Extensions;
 
@@ -21,10 +18,10 @@ internal static class MiscExtensions
         this Principal principal,
         string[] properties)
     {
-        DirectoryEntry entry = principal.GetDirectoryEntry();
-
         if (properties.Length == 0)
             return null;
+
+        DirectoryEntry entry = principal.GetDirectoryEntry();
 
         if (properties.Any(e => e == "*"))
             return entry.GetAllAttributes();
@@ -42,7 +39,7 @@ internal static class MiscExtensions
 
             if (IsSecurityDescriptor(property))
             {
-                additionalProperties[property] = entry.GetAcl();
+                additionalProperties[property] = entry.GetSecurityDescriptorAsPSObject();
                 continue;
             }
 
@@ -71,7 +68,7 @@ internal static class MiscExtensions
         {
             if (IsSecurityDescriptor(property))
             {
-                additionalProperties[property] = entry.GetAcl();
+                additionalProperties[property] = entry.GetSecurityDescriptorAsPSObject();
                 continue;
             }
 
@@ -88,35 +85,6 @@ internal static class MiscExtensions
         }
 
         return new(additionalProperties);
-    }
-
-    private static PSObject GetAcl(this DirectoryEntry entry)
-    {
-        Type target = typeof(NTAccount);
-        ActiveDirectorySecurity acl = entry.ObjectSecurity;
-        AuthorizationRuleCollection rules = acl.GetAccessRules(true, true, target);
-        return PSObject.AsPSObject(acl)
-            .AddProperty("Path", entry.Path)
-            .AddProperty("Owner", acl.GetOwner(target))
-            .AddProperty("Group", acl.GetGroup(target))
-            .AddProperty("Sddl", acl.GetSecurityDescriptorSddlForm(AccessControlSections.All))
-            .AddProperty("Access", rules)
-            .AddProperty("AccessToString", rules.GetAccessToString());
-    }
-
-    private static PSObject AddProperty(this PSObject pSObject, string name, object? value)
-    {
-        pSObject.Properties.Add(new PSNoteProperty(name, value), preValidated: true);
-        return pSObject;
-    }
-
-    private static string GetAccessToString(this AuthorizationRuleCollection rules)
-    {
-        StringBuilder builder = new();
-        foreach (ActiveDirectoryAccessRule rule in rules)
-            builder.AppendLine($"{rule.IdentityReference} {rule.AccessControlType}");
-
-        return builder.ToString();
     }
 
     private static bool IsIAdsLargeInteger(
