@@ -9,7 +9,7 @@ schema: 2.0.0
 
 ## SYNOPSIS
 
-`tree` like cmdlet for Active Directory group members.
+Displays Active Directory group members in a tree-like structure, including nested members and circular group detection.
 
 ## SYNTAX
 
@@ -45,61 +45,87 @@ Get-ADTreeGroupMember
 
 ## DESCRIPTION
 
-The `Get-ADTreeGroupMember` cmdlet gets the Active Directory members of a specified group and displays them in a tree like structure. The members of a group can be users, groups, computers and service accounts. This cmdlet also helps identifying Circular Nested Groups.
+The `Get-ADTreeGroupMember` cmdlet retrieves the members of an Active Directory group—including nested members—and displays them in a tree-like hierarchical structure. Group members can include users, groups, computers, and service accounts.
+
+This format makes it easy to visualize group nesting and quickly identify circular nested groups (infinite recursion loops caused by circular membership).
 
 ## EXAMPLES
 
 ### Example 1: Get the members of a group
 
 ```powershell
-PS ..\PSADTree\> Get-ADTreeGroupMember TestGroup001
+PS> Get-ADTreeGroupMember TestGroup001
 ```
 
-By default, this cmdlet uses `-Depth` with a default value of `3`.
+By default, this cmdlet uses `-Depth 3`.
 
 ### Example 2: Get the members of a group recursively
 
 ```powershell
-PS ..\PSADTree\> Get-ADTreeGroupMember TestGroup001 -Recursive
+PS> Get-ADTreeGroupMember TestGroup001 -Recursive
 ```
+
+The `-Recursive` switch retrieves all nested members regardless of depth.
 
 ### Example 3: Get the members of all groups under an Organizational Unit
 
 ```powershell
-PS ..\PSADTree\> Get-ADGroup -Filter * -SearchBase 'OU=myOU,DC=myDomain,DC=com' |
+PS> Get-ADGroup -Filter * -SearchBase 'OU=myOU,DC=myDomain,DC=com' |
     Get-ADTreeGroupMember
 ```
 
-You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup) instances piped to this cmdlet are also supported.
+You can pipe strings containing  group identity to this cmdlet or [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup) objects to this cmdlet.
 
-### Example 4: Find any Circular Nested Groups from previous example
+### Example 4: Find circular nested groups
 
 ```powershell
-PS ..\PSADTree\> Get-ADComputer -Filter * -SearchBase 'OU=myOU,DC=myDomain,DC=com' |
+PS> Get-ADComputer -Filter * -SearchBase 'OU=myOU,DC=myDomain,DC=com' |
     Get-ADTreeGroupMember -Recursive -Group |
     Where-Object IsCircular
 ```
 
-The `-Group` switch limits the members tree view to nested groups only.
+The `-Group` switch limits output to nested groups only (excluding users, computers, etc.).
 
-### Example 5: Get group members in a different Domain
-
-```powershell
-PS ..\PSADTree\> Get-ADTreeGroupMember TestGroup001 -Server otherDomain
-```
-
-### Example 6: Get group members including processed groups
+### Example 5: Get group members in a different domain
 
 ```powershell
-PS ..\PSADTree\> Get-ADTreeGroupMember TestGroup001 -ShowAll
+PS> Get-ADTreeGroupMember TestGroup001 -Server otherDomain.com
 ```
 
-By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.
-The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of all previously processed groups.
+### Example 6: Display hierarchy even for previously processed groups
+
+```powershell
+PS> Get-ADTreeGroupMember TestGroup001 -ShowAll
+```
+
+By default, groups that have already been processed (to avoid redundant recursion) are marked as _"Processed Group"_ and their subtree is not expanded.  
+The `-ShowAll` switch forces full hierarchy display for all groups.
 
 > [!NOTE]
+> Using `-ShowAll` does not incur a significant performance penalty because the cmdlet caches group data internally.
+
+### Example 7: Retrieve and inspect additional properties
+
+```powershell
+# Retrieve specific properties (friendly names are preserved as keys)
+PS> $tree = Get-ADTreeGroupMember TestGroup001 -Properties Country, City, nTSecurityDescriptor
+
+# View department for all user objects
+PS> $tree | Where-Object ObjectClass -EQ 'user' |
+    Select-Object *, @{ Name='Country'; Expression={ $_.AdditionalProperties['Country'] }}
+
+# Retrieve all available attributes
+PS> $tree = Get-ADTreeGroupMember TestGroup001 -Properties *
+
+# Inspect the full dictionary for the first object
+PS> $tree[0].AdditionalProperties   # ReadOnlyDictionary<string, object?>
+```
+
+>[!TIP]
 >
-> The use of this switch should not infer in a great performance cost, for more details see the parameter details.
+> - `-Properties *` retrieves __all__ available attributes from each object.
+> - Use friendly names (e.g. `Country` → `c`, `City` → `l`, etc) or raw LDAP names — the key in `.AdditionalProperties` matches what you requested.
+> - See the full list of supported friendly names in the [source code `LdapMap.cs`](https://github.com/santisq/PSADTree/tree/main/src/PSADTree/LdapMap.cs)
 
 ## PARAMETERS
 
@@ -107,7 +133,7 @@ The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of 
 
 Specifies a user account that has permission to perform this action. The default is the current user.
 
-Type a user name, such as __User01__ or __Domain01\User01__, or enter a __PSCredential__ object generated by the `Get-Credential` cmdlet. If you type a user name, you're prompted to enter the password.
+Type a user name, such as __User01__ or __Domain01\User01__, or enter a __PSCredential__ object generated by the `Get-Credential` cmdlet. If you type a user name, you will be prompted to enter the password.
 
 ```yaml
 Type: PSCredential
@@ -124,7 +150,7 @@ Accept wildcard characters: False
 ### -Depth
 
 Determines the number of nested groups and their members included in the recursion.
-By default, only 3 levels of recursion are included. `Get-ADTreeGroupMember` emits a warning if the levels exceed this number.
+By default, only 3 levels of recursion are included. `Get-ADTreeGroupMember` emits a warning if the actual nesting exceeds this number.
 
 ```yaml
 Type: Int32
@@ -147,7 +173,7 @@ Wildcard characters are accepted.
 > [!NOTE]
 >
 > - Patterns are tested against the principal's `.SamAccountName` property.
-> - When the matched principal is of type `group`, all child principals are also excluded from the output.
+> - When the matched principal is of type `group`, __all__ child principals are also excluded from the output.
 
 ```yaml
 Type: String[]
@@ -179,15 +205,15 @@ Accept wildcard characters: False
 
 ### -Identity
 
-Specifies an Active Directory group by providing one of the following property values:
+Specifies the Active Directory group to retrieve members from. You can identify the group using one of the following values:
 
-- A DistinguishedName
-- A GUID
-- A SID (Security Identifier)
-- A sAMAccountName
-- A UserPrincipalName
+- DistinguishedName
+- GUID
+- SID (Security Identifier)
+- sAMAccountName
+- UserPrincipalName
 
-See [`IdentityType` Enum](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement.identitytype) for more information.
+For more information, see the [`IdentityType` enumeration](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement.identitytype).
 
 ```yaml
 Type: String
@@ -212,8 +238,8 @@ __Behavior:__
 
 __Supported input styles:__
 
-- Friendly/PowerShell-style names (as in the Active Directory module), e.g., `City`, `Country`, `EmailAddress`
-- Raw LDAP attribute names, e.g., `l`, `c`, `mail`
+- Friendly/PowerShell-style names (as in the Active Directory module), e.g., `City`, `Country`, `Department`, `EmailAddress`, `PasswordLastSet`, `LastBadPasswordAttempt`
+- Raw LDAP attribute names, e.g., `l`, `c`, `department`, `mail`, `pwdLastSet`, `badPasswordTime`, `whenCreated`
 
 When a friendly name is used, the key in `.AdditionalProperties` matches the friendly name (not the LDAP name).
 
@@ -238,7 +264,10 @@ Accept wildcard characters: False
 
 ### -Recursive
 
-Specifies that the cmdlet should get all group members of the specified group.
+Retrieves __all__ nested group members recursively (no depth limit).
+
+> [!NOTE]
+> This switch and `-Depth` are mutually exclusive. If `-Recursive` is specified, `-Depth` is ignored.
 
 ```yaml
 Type: SwitchParameter
@@ -254,18 +283,18 @@ Accept wildcard characters: False
 
 ### -Server
 
-Specifies the AD DS instance to connect to by providing one of the following values for a corresponding domain name or directory server.
+Specifies the Active Directory server (or domain) to bind to. Valid values include:
 
-Domain name values:
+__Domain name formats__:
 
-- Fully qualified domain name
+- Fully qualified domain name (FQDN)
 - NetBIOS name
 
-Directory server values:
+__Server formats__:
 
-- Fully qualified directory server name
+- Fully qualified server name
 - NetBIOS name
-- Fully qualified directory server name and port
+- Fully qualified server name with port (e.g. `dc01.contoso.com:3268`)
 
 ```yaml
 Type: String
@@ -281,14 +310,15 @@ Accept wildcard characters: False
 
 ### -ShowAll
 
-By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.
-This switch forces the cmdlet to display the full hierarchy including previously processed groups.
+By default, groups that have already been processed are marked as _"Processed Group"_ and their hierarchy is not expanded (to avoid redundant output and recursion).
+
+The `-ShowAll` switch forces the cmdlet to display the full hierarchy of all groups, even those previously processed.
 
 > [!NOTE]
 >
-> This cmdlet uses a caching mechanism to ensure that Active Directory Groups are only queried once per Identity.
-> This caching mechanism is also used to reconstruct the pre-processed group's hierarchy when the `-ShowAll` switch is used, thus not incurring a performance cost.
-> The intent behind this switch is to not clutter the cmdlet's output by default.
+> This cmdlet caches group data to query each unique group only once.  
+> The `-ShowAll` switch reuses this cache to reconstruct hierarchies without additional AD queries, so it does not cause a significant performance penalty.  
+> The default behavior (hiding processed groups) keeps output clean and focused.
 
 ```yaml
 Type: SwitchParameter
@@ -310,22 +340,40 @@ This cmdlet supports the common parameters. For more information, see [about_Com
 
 ### System.String
 
-You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup) instances piped to this cmdlet are also supported.
+You can pipe strings that represent a group identity (DistinguishedName, GUID, SID, sAMAccountName, or UserPrincipalName) to this cmdlet.
+
+### Microsoft.ActiveDirectory.Management.ADGroup
+
+[__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup) objects are also accepted (typically piped from `Get-ADGroup` or similar cmdlets).
 
 ## OUTPUTS
 
 ### PSADTree.TreeGroup
 
+Represents an Active Directory group in the tree structure.
+
 ### PSADTree.TreeUser
 
+Represents an Active Directory user in the tree structure.
+
 ### PSADTree.TreeComputer
+
+Represents an Active Directory computer in the tree structure.
 
 ## NOTES
 
 `treegroupmember` is the alias for this cmdlet.
 
+The cmdlet uses internal caching to avoid redundant queries to Active Directory and efficiently detect/handle circular group nesting.
+
 ## RELATED LINKS
 
 [__`Principal` Class__](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement.principal)
 
-[__`DirectoryEntry`__ Class](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directoryentry)
+[__`DirectoryEntry` Class__](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directoryentry)
+
+[__`Get-ADGroupMember`__](https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-adgroupmember)
+
+[__`Get-ADGroup`__](https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-adgroup)
+
+[__`Get-ADUser`__](https://learn.microsoft.com/en-us/powershell/module/activedirectory/get-aduser)
