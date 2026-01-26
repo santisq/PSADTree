@@ -1,7 +1,7 @@
 <h1 align="center">PSADTree</h1>
 
 <div align="center">
-<sub>Tree like cmdlets for Active Directory Principals!</sub>
+<sub>Tree-like cmdlets for Active Directory principals!</sub>
 <br /><br />
 
 [![build](https://github.com/santisq/PSADTree/actions/workflows/ci.yml/badge.svg)](https://github.com/santisq/PSADTree/actions/workflows/ci.yml)
@@ -10,7 +10,8 @@
 
 </div>
 
-PSADTree is a PowerShell Module with cmdlets that emulate the [`tree` command](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/tree) for Active Directory Principals.  
+PSADTree is a PowerShell module that brings `tree`-like visualization to Active Directory group structures — perfect for spotting nested membership and circular references at a glance.
+
 This Module currently includes two cmdlets:
 
 - [Get-ADTreeGroupMember](docs/en-US/Get-ADTreeGroupMember.md) for AD Group Members.
@@ -42,7 +43,9 @@ Set-Location ./PSADTree
 
 ## Requirements
 
-This Module uses the [`System.DirectoryServices.AccountManagement` Namespace](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement?view=dotnet-plat-ext-7.0) to query Active Directory, its System Requirement is __Windows OS__ and is compatible with __Windows PowerShell v5.1__ or [__PowerShell 7+__](https://github.com/PowerShell/PowerShell).
+- Windows operating system (uses Windows-specific Active Directory .NET APIs)
+- PowerShell 5.1 (Windows PowerShell) or PowerShell 7.4+
+- Read permissions on the Active Directory objects you want to query
 
 ## Usage
 
@@ -110,9 +113,70 @@ ChildDomain                         group ├── TestGroup005 ↔ Processed G
 ChildDomain                         group └── TestGroup006 ↔ Processed Group
 ```
 
+### Retrieve and inspect additional properties
+
+```powershell
+PS ..\PSADTree> $tree = Get-ADTreeGroupMember TestGroup001 -Properties *
+PS ..\PSADTree> $user = $tree | Where-Object ObjectClass -EQ user | Select-Object -First 1
+PS ..\PSADTree> $user.AdditionalProperties
+
+Key                        Value
+---                        -----
+objectClass                {top, person, organizationalPerson, user}
+cn                         John Doe
+sn                         Doe
+c                          US
+l                          Elizabethtown
+st                         NC
+title                      Accounting Specialist
+postalCode                 28337
+physicalDeliveryOfficeName Accounting Office
+telephoneNumber            910-862-8720
+givenName                  John
+initials                   B
+distinguishedName          CN=John Doe,OU=Accounting,OU=Mylab Users,DC=mylab,DC=local
+instanceType               4
+whenCreated                9/18/2025 4:53:58 PM
+whenChanged                9/18/2025 4:53:58 PM
+displayName                John Doe
+uSNCreated                 19664
+memberOf                   CN=TestGroup001,OU=Mylab Groups,DC=mylab,DC=local
+uSNChanged                 19668
+department                 Accounting
+company                    Active Directory Pro
+streetAddress              2628 Layman Avenue
+nTSecurityDescriptor       System.DirectoryServices.ActiveDirectorySecurity
+name                       John Doe
+objectGUID                 {225, 241, 160, 222…}
+userAccountControl         512
+badPwdCount                0
+codePage                   0
+countryCode                0
+badPasswordTime            0
+lastLogoff                 0
+lastLogon                  0
+pwdLastSet                 0
+primaryGroupID             513
+objectSid                  {1, 5, 0, 0…}
+accountExpires             9223372036854775807
+logonCount                 0
+sAMAccountName             john.doe
+sAMAccountType             805306368
+userPrincipalName          john.doe@mylab.com
+objectCategory             CN=Person,CN=Schema,CN=Configuration,DC=mylab,DC=local
+dSCorePropagationData      1/1/1601 12:00:00 AM
+mail                       john.doe@mylab.com
+```
+
+>[!TIP]
+>
+> - `-Properties *` retrieves __all__ available attributes from each object.
+> - Use friendly names (e.g. `Country` → `c`, `City` → `l`, `PasswordLastSet` → `pwdLastSet`) or raw LDAP names — the key in `.AdditionalProperties` matches what you requested.
+> - See the full list of supported friendly names in the [source code `LdapMap.cs`](https://github.com/santisq/PSADTree/tree/main/src/PSADTree/LdapMap.cs)
+
 ### Get group members recursively, include only groups and display all processed groups
 
-The `-Recursive` switch indicates that the cmdlet should traverse all the group hierarchy.  
+The `-Recursive` switch indicates that the cmdlet should traverse traverse the entire group hierarchy.  
 The `-Group` switch limits the members tree view to nested groups only.  
 By default, previously processed groups will be marked as _"Processed Group"_ and their hierarchy will not be displayed.  
 The `-ShowAll` switch indicates that the cmdlet should display the hierarchy of all previously processed groups.  
