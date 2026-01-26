@@ -29,7 +29,7 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem>
-                <ScriptBlock>$_.Domain -replace '^DC=|(?&lt;!\\),.+'</ScriptBlock>
+                <ScriptBlock>[PSADTree.Internal._FormattingInternals]::GetDomain($_)</ScriptBlock>
               </TableColumnItem>
               <TableColumnItem>
                 <PropertyName>ObjectClass</PropertyName>

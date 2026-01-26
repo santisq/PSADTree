@@ -1,8 +1,6 @@
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.DirectoryServices;
-using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
 using System.Security.AccessControl;
@@ -17,14 +15,20 @@ namespace PSADTree.Internal;
 public static class _SecurityDescriptorInternals
 {
     private readonly static Type _target = typeof(NTAccount);
-
-    private readonly static ReadOnlyDictionary<string, MethodInfo> _propertyGetters;
+    private static readonly MethodInfo _getOwner;
+    private static readonly MethodInfo _getGroup;
+    private static readonly MethodInfo _getSddlForm;
+    private static readonly MethodInfo _getAccessRules;
+    private static readonly MethodInfo _getAccessToString;
 
     static _SecurityDescriptorInternals()
     {
-        _propertyGetters = new(typeof(_SecurityDescriptorInternals)
-            .GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .ToDictionary(prop => prop.Name, prop => prop));
+        Type type = typeof(_SecurityDescriptorInternals);
+        _getOwner = type.GetMethod(nameof(GetOwner))!;
+        _getGroup = type.GetMethod(nameof(GetGroup))!;
+        _getSddlForm = type.GetMethod(nameof(GetSddlForm))!;
+        _getAccessRules = type.GetMethod(nameof(GetAccessRules))!;
+        _getAccessToString = type.GetMethod(nameof(GetAccessToString))!;
     }
 
     private static ActiveDirectorySecurity GetBaseObject(PSObject target)
@@ -52,15 +56,13 @@ public static class _SecurityDescriptorInternals
     }
 
     internal static PSObject GetSecurityDescriptorAsPSObject(this DirectoryEntry entry)
-    {
-        return PSObject.AsPSObject(entry.ObjectSecurity)
-            .AddProperty("Path", entry.Path)
-            .AddCodeProperty("Owner", _propertyGetters["GetOwner"])
-            .AddCodeProperty("Group", _propertyGetters["GetGroup"])
-            .AddCodeProperty("Sddl", _propertyGetters["GetSddlForm"])
-            .AddCodeProperty("Access", _propertyGetters["GetAccessRules"])
-            .AddCodeProperty("AccessToString", _propertyGetters["GetAccessToString"]);
-    }
+        => PSObject.AsPSObject(entry.ObjectSecurity)
+                .AddProperty("Path", entry.Path)
+                .AddCodeProperty("Owner", _getOwner)
+                .AddCodeProperty("Group", _getGroup)
+                .AddCodeProperty("Sddl", _getSddlForm)
+                .AddCodeProperty("Access", _getAccessRules)
+                .AddCodeProperty("AccessToString", _getAccessToString);
 
     private static PSObject AddProperty(
         this PSObject psObject,
