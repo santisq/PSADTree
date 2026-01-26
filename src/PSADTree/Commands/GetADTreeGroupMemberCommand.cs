@@ -14,6 +14,7 @@ namespace PSADTree.Commands;
 public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 {
     [Parameter]
+    [Alias("g")]
     public SwitchParameter Group { get; set; }
 
     protected override Principal GetFirstPrincipal() => GroupPrincipal.FindByIdentity(Context, Identity);
@@ -35,12 +36,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         IEnumerable<Principal> members = groupPrincipal.ToSafeSortedEnumerable(
             selector: group => group.GetMembers(),
-            cmdlet: this,
-            comparer: Comparer);
+            cmdlet: this);
 
         foreach (Principal member in members)
         {
-            IDisposable? disposable = null;
+            Principal? disposable = null;
             try
             {
                 if (member is { DistinguishedName: null } ||

@@ -6,6 +6,10 @@ namespace PSADTree;
 #pragma warning disable CS8767
 internal sealed class PSADTreeComparer : IComparer<Principal>
 {
+    internal static PSADTreeComparer Value { get; }
+
+    static PSADTreeComparer() => Value = new();
+
     public int Compare(Principal lhs, Principal rhs) =>
         lhs.StructuralObjectClass == "group" && rhs.StructuralObjectClass == "group"
             ? rhs.SamAccountName.CompareTo(lhs.SamAccountName)  // Groups in descending order

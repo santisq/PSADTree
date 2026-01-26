@@ -50,8 +50,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
             IEnumerable<Principal> principalMembership = principal.ToSafeSortedEnumerable(
                 selector: principal => principal.GetGroups(Context),
-                cmdlet: this,
-                comparer: Comparer);
+                cmdlet: this);
 
             foreach (Principal parent in principalMembership)
             {
@@ -73,8 +72,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         IEnumerable<Principal> principalMembership = groupPrincipal.ToSafeSortedEnumerable(
             selector: principal => principal.GetGroups(Context),
-            cmdlet: this,
-            comparer: Comparer);
+            cmdlet: this);
 
         foreach (Principal group in principalMembership)
         {

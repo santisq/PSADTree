@@ -39,8 +39,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     internal TreeBuilder Builder { get; } = new();
 
-    internal PSADTreeComparer Comparer { get; } = new();
-
     [Parameter(
             Position = 0,
             Mandatory = true,
@@ -50,28 +48,35 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string? Identity { get; set; }
 
     [Parameter]
+    [Alias("s", "dc")]
     public string Server { get; set; } = Environment.UserDomainName;
 
     [Parameter]
     [Credential]
+    [Alias("cred")]
     public PSCredential? Credential { get; set; }
 
     [Parameter(ParameterSetName = DepthParameterSet)]
     [ValidateRange(0, int.MaxValue)]
+    [Alias("d")]
     public int Depth { get; set; } = 3;
 
     [Parameter(ParameterSetName = RecursiveParameterSet)]
+    [Alias("rec")]
     public SwitchParameter Recursive { get; set; }
 
     [Parameter]
+    [Alias("a")]
     public SwitchParameter ShowAll { get; set; }
 
     [Parameter]
     [SupportsWildcards]
+    [Alias("ex")]
     public string[]? Exclude { get; set; }
 
     [Parameter]
     [ArgumentCompleter(typeof(LdapCompleter))]
+    [Alias("prop", "attrs", "attributes")]
     public string[] Properties
     {
         get => _properties ??= [];

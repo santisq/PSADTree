@@ -17,13 +17,14 @@ schema: 2.0.0
 
 ```powershell
 Get-ADTreeGroupMember
-    [-Group]
     [-Identity] <String>
     [-Server <String>]
     [-Credential <PSCredential>]
     [-Depth <Int32>]
     [-ShowAll]
+    [-Group]
     [-Exclude <String[]>]
+    [-Properties <String[]>]
     [<CommonParameters>]
 ```
 
@@ -31,13 +32,14 @@ Get-ADTreeGroupMember
 
 ```powershell
 Get-ADTreeGroupMember
-    [-Group]
     [-Identity] <String>
     [-Server <String>]
     [-Credential <PSCredential>]
     [-Recursive]
     [-ShowAll]
+    [-Group]
     [-Exclude <String[]>]
+    [-Properties <String[]>]
     [<CommonParameters>]
 ```
 
@@ -68,7 +70,7 @@ PS ..\PSADTree\> Get-ADGroup -Filter * -SearchBase 'OU=myOU,DC=myDomain,DC=com' 
     Get-ADTreeGroupMember
 ```
 
-You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup?view=activedirectory-management-10.0) instances piped to this cmdlet are also supported.
+You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup) instances piped to this cmdlet are also supported.
 
 ### Example 4: Find any Circular Nested Groups from previous example
 
@@ -110,7 +112,7 @@ Type a user name, such as __User01__ or __Domain01\User01__, or enter a __PSCred
 ```yaml
 Type: PSCredential
 Parameter Sets: (All)
-Aliases:
+Aliases: cred
 
 Required: False
 Position: Named
@@ -127,7 +129,7 @@ By default, only 3 levels of recursion are included. `Get-ADTreeGroupMember` emi
 ```yaml
 Type: Int32
 Parameter Sets: Depth
-Aliases:
+Aliases: d
 
 Required: False
 Position: Named
@@ -150,7 +152,7 @@ Wildcard characters are accepted.
 ```yaml
 Type: String[]
 Parameter Sets: (All)
-Aliases:
+Aliases: ex
 
 Required: False
 Position: Named
@@ -166,7 +168,7 @@ The `-Group` switch indicates that the cmdlet should display nested group member
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: g
 
 Required: False
 Position: Named
@@ -185,7 +187,7 @@ Specifies an Active Directory group by providing one of the following property v
 - A sAMAccountName
 - A UserPrincipalName
 
-See [`IdentityType` Enum](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement.identitytype?view=dotnet-plat-ext-7.0) for more information.
+See [`IdentityType` Enum](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement.identitytype) for more information.
 
 ```yaml
 Type: String
@@ -199,6 +201,41 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
+### -Properties
+
+Specifies one or more additional properties (LDAP attributes) to retrieve for each Active Directory object (user, group, computer, etc.) in the tree. Retrieved values are added to the read-only dictionary in the `.AdditionalProperties` property of each output object (`TreeUser`, `TreeGroup`, `TreeComputer`).
+
+__Behavior:__
+
+- `*` → Retrieves __all__ available attributes from the object.
+- One or more property names → Only properties that exist on the object and have a non-null value are included.
+
+__Supported input styles:__
+
+- Friendly/PowerShell-style names (as in the Active Directory module), e.g., `City`, `Country`, `EmailAddress`
+- Raw LDAP attribute names, e.g., `l`, `c`, `mail`
+
+When a friendly name is used, the key in `.AdditionalProperties` matches the friendly name (not the LDAP name).
+
+__Special handling:__
+
+- `nTSecurityDescriptor` → Returned as a security descriptor object (similar to `Get-Acl` output)
+- Large integer / FILETIME attributes (such as `pwdLastSet`, `accountExpires`, `lastLogonTimestamp`, `badPasswordTime`, etc.) → Converted to `long` (64-bit FileTime ticks)
+
+Non-existent properties (e.g. `Title` on a computer object) are silently ignored.
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases: prop, attrs, attributes
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Recursive
 
 Specifies that the cmdlet should get all group members of the specified group.
@@ -206,7 +243,7 @@ Specifies that the cmdlet should get all group members of the specified group.
 ```yaml
 Type: SwitchParameter
 Parameter Sets: Recursive
-Aliases:
+Aliases: rec
 
 Required: False
 Position: Named
@@ -233,7 +270,7 @@ Directory server values:
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases:
+Aliases: s, dc
 
 Required: False
 Position: Named
@@ -256,7 +293,7 @@ This switch forces the cmdlet to display the full hierarchy including previously
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: a
 
 Required: False
 Position: Named
@@ -273,7 +310,7 @@ This cmdlet supports the common parameters. For more information, see [about_Com
 
 ### System.String
 
-You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup?view=activedirectory-management-10.0) instances piped to this cmdlet are also supported.
+You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](https://learn.microsoft.com/en-us/dotnet/api/microsoft.activedirectory.management.adgroup) instances piped to this cmdlet are also supported.
 
 ## OUTPUTS
 
@@ -288,3 +325,7 @@ You can pipe strings containing an identity to this cmdlet. [__`ADGroup`__](http
 `treegroupmember` is the alias for this cmdlet.
 
 ## RELATED LINKS
+
+[__`Principal` Class__](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.accountmanagement.principal)
+
+[__`DirectoryEntry`__ Class](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directoryentry)

@@ -32,6 +32,10 @@ internal static class MiscExtensions
 
         foreach (string property in properties)
         {
+            // already processed
+            if (additionalProperties.ContainsKey(property))
+                continue;
+
             if (!LdapMap.TryGetValue(property, out string? ldapDn))
             {
                 ldapDn = property;
