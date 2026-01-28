@@ -21,6 +21,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     private WildcardPattern[]? _exclusionPatterns;
 
+    private string[]? _properties;
+
     private const WildcardOptions WildcardPatternOptions = WildcardOptions.Compiled
         | WildcardOptions.CultureInvariant
         | WildcardOptions.IgnoreCase;
@@ -37,8 +39,6 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
 
     internal TreeBuilder Builder { get; } = new();
 
-    internal PSADTreeComparer Comparer { get; } = new();
-
     [Parameter(
             Position = 0,
             Mandatory = true,
@@ -48,25 +48,40 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     public string? Identity { get; set; }
 
     [Parameter]
+    [Alias("s", "dc")]
     public string Server { get; set; } = Environment.UserDomainName;
 
     [Parameter]
     [Credential]
+    [Alias("cred")]
     public PSCredential? Credential { get; set; }
 
     [Parameter(ParameterSetName = DepthParameterSet)]
     [ValidateRange(0, int.MaxValue)]
+    [Alias("d")]
     public int Depth { get; set; } = 3;
 
     [Parameter(ParameterSetName = RecursiveParameterSet)]
+    [Alias("rec")]
     public SwitchParameter Recursive { get; set; }
 
     [Parameter]
+    [Alias("a")]
     public SwitchParameter ShowAll { get; set; }
 
     [Parameter]
     [SupportsWildcards]
+    [Alias("ex")]
     public string[]? Exclude { get; set; }
+
+    [Parameter]
+    [ArgumentCompleter(typeof(LdapCompleter))]
+    [Alias("prop", "attrs", "attributes")]
+    public string[] Properties
+    {
+        get => _properties ??= [];
+        set => _properties = [.. value.Where(e => !string.IsNullOrWhiteSpace(e))];
+    }
 
     protected override void BeginProcessing()
     {
@@ -225,7 +240,7 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
             return treeGroup;
         }
 
-        treeGroup = new TreeGroup(source, parent, group, depth);
+        treeGroup = new TreeGroup(source, parent, group, Properties, depth);
         PushToStack(treeGroup, group);
         return treeGroup;
     }

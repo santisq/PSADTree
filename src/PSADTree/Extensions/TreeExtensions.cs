@@ -88,11 +88,8 @@ internal static class TreeExtensions
 
 #if NETCOREAPP
     [SkipLocalsInit]
-#endif
-    private static unsafe string ReplaceAt(this string input, int index, char newChar)
-    {
-#if NETCOREAPP
-        return string.Create(
+    private static string ReplaceAt(this string input, int index, char newChar)
+        => string.Create(
             input.Length, (input, index, newChar),
             static (buffer, state) =>
         {
@@ -100,6 +97,8 @@ internal static class TreeExtensions
             buffer[state.index] = state.newChar;
         });
 #else
+    private static unsafe string ReplaceAt(this string input, int index, char newChar)
+    {
         if (input.Length > 0x200)
         {
             char[] chars = input.ToCharArray();
@@ -119,14 +118,13 @@ internal static class TreeExtensions
 
         pChars[index] = newChar;
         return new string(pChars, 0, input.Length);
-#endif
     }
+#endif
 
     internal static IEnumerable<Principal> ToSafeSortedEnumerable<TPrincipal>(
         this TPrincipal principal,
         Func<TPrincipal, PrincipalSearchResult<Principal>> selector,
-        PSCmdlet cmdlet,
-        PSADTreeComparer comparer)
+        PSCmdlet cmdlet)
         where TPrincipal : Principal
     {
         List<Principal> principals = [];
@@ -156,7 +154,7 @@ internal static class TreeExtensions
 
         return principals
             .OrderBy(static e => e.StructuralObjectClass == "group")
-            .ThenBy(static e => e, comparer);
+            .ThenBy(static e => e, PSADTreeComparer.Value);
     }
 
     internal static string GetDefaultNamingContext(this string distinguishedName) =>

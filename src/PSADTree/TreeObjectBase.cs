@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.DirectoryServices.AccountManagement;
 using System.Security.Principal;
 using PSADTree.Extensions;
@@ -33,6 +34,8 @@ public abstract class TreeObjectBase
 
     public SecurityIdentifier ObjectSid { get; }
 
+    public ReadOnlyDictionary<string, object?>? AdditionalProperties { get; }
+
     protected TreeObjectBase(
         TreeObjectBase treeObject,
         TreeGroup? parent,
@@ -52,9 +55,10 @@ public abstract class TreeObjectBase
         UserPrincipalName = treeObject.UserPrincipalName;
         Description = treeObject.Description;
         DisplayName = treeObject.DisplayName;
+        AdditionalProperties = treeObject.AdditionalProperties;
     }
 
-    protected TreeObjectBase(string source, Principal principal)
+    protected TreeObjectBase(string source, Principal principal, string[] properties)
     {
         Source = source;
         SamAccountName = principal.SamAccountName;
@@ -67,14 +71,16 @@ public abstract class TreeObjectBase
         UserPrincipalName = principal.UserPrincipalName;
         Description = principal.Description;
         DisplayName = principal.DisplayName;
+        AdditionalProperties = principal.GetAdditionalProperties(properties);
     }
 
     protected TreeObjectBase(
         string source,
         TreeGroup? parent,
         Principal principal,
+        string[] properties,
         int depth)
-        : this(source, principal)
+        : this(source, principal, properties)
     {
         Depth = depth;
         Hierarchy = principal.SamAccountName.Indent(depth);

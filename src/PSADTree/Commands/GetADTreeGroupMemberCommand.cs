@@ -10,13 +10,11 @@ namespace PSADTree.Commands;
     VerbsCommon.Get, "ADTreeGroupMember",
     DefaultParameterSetName = DepthParameterSet)]
 [Alias("treegroupmember")]
-[OutputType(
-    typeof(TreeGroup),
-    typeof(TreeUser),
-    typeof(TreeComputer))]
+[OutputType(typeof(TreeGroup), typeof(TreeUser), typeof(TreeComputer))]
 public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
 {
     [Parameter]
+    [Alias("g")]
     public SwitchParameter Group { get; set; }
 
     protected override Principal GetFirstPrincipal() => GroupPrincipal.FindByIdentity(Context, Identity);
@@ -26,7 +24,7 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
         if (principal is GroupPrincipal group && !ShouldExclude(principal))
         {
             string source = group.DistinguishedName;
-            PushToStack(new TreeGroup(source, group), group);
+            PushToStack(new TreeGroup(source, group, Properties), group);
         }
     }
 
@@ -38,12 +36,11 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         IEnumerable<Principal> members = groupPrincipal.ToSafeSortedEnumerable(
             selector: group => group.GetMembers(),
-            cmdlet: this,
-            comparer: Comparer);
+            cmdlet: this);
 
         foreach (Principal member in members)
         {
-            IDisposable? disposable = null;
+            Principal? disposable = null;
             try
             {
                 if (member is { DistinguishedName: null } ||
@@ -92,9 +89,15 @@ public sealed class GetADTreeGroupMemberCommand : PSADTreeCmdletBase
     {
         TreeObjectBase treeObject = principal switch
         {
-            UserPrincipal user => AddTreeObject(new TreeUser(source, parent, user, depth)),
-            ComputerPrincipal computer => AddTreeObject(new TreeComputer(source, parent, computer, depth)),
-            GroupPrincipal group => ProcessGroup(parent, group, source, depth),
+            UserPrincipal user =>
+                AddTreeObject(new TreeUser(source, parent, user, Properties, depth)),
+
+            ComputerPrincipal computer =>
+                AddTreeObject(new TreeComputer(source, parent, computer, Properties, depth)),
+
+            GroupPrincipal group =>
+                ProcessGroup(parent, group, source, depth),
+
             _ => throw new ArgumentOutOfRangeException(nameof(principal)),
         };
 

@@ -12,19 +12,12 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <!--<TableColumnHeader>
-            <Label>SamAccountName</Label>
-            <Width>20</Width>
-            <Alignment>Left</Alignment>
-          </TableColumnHeader>-->
           <TableColumnHeader>
             <Label>Domain</Label>
-            <!--<Width>14</Width>-->
             <Alignment>Left</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
             <Label>ObjectClass</Label>
-            <!--<Width>14</Width>-->
             <Alignment>Right</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
@@ -35,11 +28,8 @@
         <TableRowEntries>
           <TableRowEntry>
             <TableColumnItems>
-              <!--<TableColumnItem>
-                <PropertyName>SamAccountName</PropertyName>
-              </TableColumnItem>-->
               <TableColumnItem>
-                <ScriptBlock>$_.Domain -replace '^DC=|(?&lt;!\\),.+'</ScriptBlock>
+                <ScriptBlock>[PSADTree.Internal._FormattingInternals]::GetDomain($_)</ScriptBlock>
               </TableColumnItem>
               <TableColumnItem>
                 <PropertyName>ObjectClass</PropertyName>

@@ -10,10 +10,7 @@ namespace PSADTree.Commands;
     VerbsCommon.Get, "ADTreePrincipalGroupMembership",
     DefaultParameterSetName = DepthParameterSet)]
 [Alias("treeprincipalmembership")]
-[OutputType(
-    typeof(TreeGroup),
-    typeof(TreeUser),
-    typeof(TreeComputer))]
+[OutputType(typeof(TreeGroup), typeof(TreeUser), typeof(TreeComputer))]
 public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBase
 {
     protected override Principal GetFirstPrincipal() => Principal.FindByIdentity(Context, Identity);
@@ -24,15 +21,15 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
         switch (principal)
         {
             case UserPrincipal user:
-                HandleOther(new TreeUser(source, user), principal);
+                HandleOther(new TreeUser(source, user, Properties), principal);
                 break;
 
             case ComputerPrincipal computer:
-                HandleOther(new TreeComputer(source, computer), principal);
+                HandleOther(new TreeComputer(source, computer, Properties), principal);
                 break;
 
             case GroupPrincipal group:
-                HandleGroup(new TreeGroup(source, group), group);
+                HandleGroup(new TreeGroup(source, group, Properties), group);
                 break;
 
             default:
@@ -53,15 +50,14 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
 
             IEnumerable<Principal> principalMembership = principal.ToSafeSortedEnumerable(
                 selector: principal => principal.GetGroups(Context),
-                cmdlet: this,
-                comparer: Comparer);
+                cmdlet: this);
 
             foreach (Principal parent in principalMembership)
             {
                 if (!ShouldExclude(parent))
                 {
                     GroupPrincipal groupPrincipal = (GroupPrincipal)parent;
-                    TreeGroup treeGroup = new(source, null, groupPrincipal, 1);
+                    TreeGroup treeGroup = new(source, null, groupPrincipal, Properties, 1);
                     PushToStack(treeGroup, groupPrincipal);
                 }
             }
@@ -76,8 +72,7 @@ public sealed class GetADTreePrincipalGroupMembershipCommand : PSADTreeCmdletBas
     {
         IEnumerable<Principal> principalMembership = groupPrincipal.ToSafeSortedEnumerable(
             selector: principal => principal.GetGroups(Context),
-            cmdlet: this,
-            comparer: Comparer);
+            cmdlet: this);
 
         foreach (Principal group in principalMembership)
         {

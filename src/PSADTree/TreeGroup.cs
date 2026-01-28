@@ -33,8 +33,8 @@ public sealed class TreeGroup : TreeObjectBase
         IsCircular = group.IsCircular;
     }
 
-    internal TreeGroup(string source, GroupPrincipal group)
-        : base(source, group)
+    internal TreeGroup(string source, GroupPrincipal group, string[] properties)
+        : base(source, group, properties)
     {
         _children = [];
     }
@@ -43,8 +43,9 @@ public sealed class TreeGroup : TreeObjectBase
         string source,
         TreeGroup? parent,
         GroupPrincipal group,
+        string[] properties,
         int depth)
-        : base(source, parent, group, depth)
+        : base(source, parent, group, properties, depth)
     {
         _children = [];
     }
