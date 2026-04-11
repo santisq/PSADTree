@@ -24,4 +24,8 @@ internal static class ExceptionExtensions
 
     internal static ErrorRecord ToSetPrincipalContext(this Exception exception) =>
         new(exception, "SetPrincipalContext", ErrorCategory.ConnectionError, null);
+
+    internal static void ThrowInvalidSequence(this string vt) =>
+        throw new ArgumentException(
+            $"The specified string contains printable content when it should only contain ANSI escape sequences: '{vt}'.");
 }

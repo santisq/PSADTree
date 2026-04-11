@@ -1,21 +1,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.DirectoryServices.AccountManagement;
+using PSADTree.Style;
 
 namespace PSADTree;
 
 public sealed class TreeGroup : TreeObjectBase
 {
-    private const string Circular = $" ↔ {VTBrightRed}Circular Reference{VTReset}";
-
-    private const string Processed = $" ↔ {VTBrightYellow}Processed Group{VTReset}";
-
-    private const string VTBrightRed = "\x1B[91m";
-
-    private const string VTBrightYellow = "\x1B[93m";
-
-    private const string VTReset = "\x1B[0m";
-
     private List<TreeObjectBase> _children;
 
     public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
@@ -72,13 +63,18 @@ public sealed class TreeGroup : TreeObjectBase
     {
         if (IsCircular = IsCircularNested())
         {
-            Hierarchy = $"{Hierarchy}{Circular}";
+            TreeStyle treeStyle = TreeStyle.Instance;
+            Hierarchy = $"{Hierarchy} {treeStyle.RenderingSet.Arrows} {treeStyle.Palette.Foreground.BrightRed}Circular Reference{treeStyle.Reset}";
         }
 
         return IsCircular;
     }
 
-    internal void SetProcessed() => Hierarchy = $"{Hierarchy}{Processed}";
+    internal void SetProcessed()
+    {
+        TreeStyle treeStyle = TreeStyle.Instance;
+        Hierarchy = $"{Hierarchy} {treeStyle.RenderingSet.Arrows} {treeStyle.Palette.Foreground.BrightYellow}Processed Group{treeStyle.Reset}";
+    }
 
     internal void LinkCachedChildren(TreeCache cache)
         => _children = cache[DistinguishedName]._children;

@@ -64,10 +64,10 @@
     # ScriptsToProcess = @()
 
     # Type files (.ps1xml) to be loaded when importing this module
-    # TypesToProcess = @()
+    TypesToProcess = @('PSADTree.Types.ps1xml')
 
     # Format files (.ps1xml) to be loaded when importing this module
-    FormatsToProcess   = @('PSADTree.Format.ps1xml')
+    FormatsToProcess   = @('PSADTree.Formats.ps1xml')
 
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
     # NestedModules = @()
@@ -77,6 +77,7 @@
 
     # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
     CmdletsToExport    = @(
+        'Get-ADTreeStyle'
         'Get-ADTreeGroupMember'
         'Get-ADTreePrincipalGroupMembership'
     )
@@ -86,6 +87,7 @@
 
     # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
     AliasesToExport    = @(
+        'treestyle'
         'treegroupmember'
         'treeprincipalmembership'
     )

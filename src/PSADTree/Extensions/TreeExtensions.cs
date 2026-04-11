@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 #endif
 using System.Text.RegularExpressions;
+using PSADTree.Style;
 
 namespace PSADTree.Extensions;
 
@@ -24,7 +25,7 @@ internal static class TreeExtensions
 #endif
     internal static string Indent(this string inputString, int indentation)
     {
-        const string corner = "└── ";
+        string corner = TreeStyle.Instance.RenderingSet.Corner;
         int repeatCount = (4 * indentation) - 4;
         int capacity = repeatCount + 4 + inputString.Length;
 
@@ -54,11 +55,12 @@ internal static class TreeExtensions
         this TreeObjectBase[] tree)
     {
         int index;
+        RenderingSet set = TreeStyle.Instance.RenderingSet;
         for (int i = 0; i < tree.Length; i++)
         {
             TreeObjectBase current = tree[i];
 
-            if ((index = current.Hierarchy.IndexOf('└')) == -1)
+            if ((index = current.Hierarchy.IndexOf(set.UpRight)) == -1)
             {
                 continue;
             }
@@ -70,13 +72,13 @@ internal static class TreeExtensions
 
                 if (char.IsWhiteSpace(hierarchy[index]))
                 {
-                    current.Hierarchy = hierarchy.ReplaceAt(index, '│');
+                    current.Hierarchy = hierarchy.ReplaceAt(index, set.Vertical);
                     continue;
                 }
 
-                if (hierarchy[index] == '└')
+                if (hierarchy[index] == set.UpRight)
                 {
-                    current.Hierarchy = hierarchy.ReplaceAt(index, '├');
+                    current.Hierarchy = hierarchy.ReplaceAt(index, set.VerticalRight);
                 }
 
                 break;
