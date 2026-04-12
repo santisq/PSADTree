@@ -43,6 +43,32 @@
       </TableControl>
     </View>
     <View>
+      <Name>PSADTree.Style.GroupStyle</Name>
+      <ViewSelectedBy>
+        <TypeName>PSADTree.Style.GroupStyle</TypeName>
+      </ViewSelectedBy>
+      <ListControl>
+        <ListEntries>
+          <ListEntry>
+            <ListItems>
+              <ListItem>
+                <Label>Circular</Label>
+                <ScriptBlock>
+                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Circular)
+                </ScriptBlock>
+              </ListItem>
+              <ListItem>
+                <Label>Processed</Label>
+                <ScriptBlock>
+                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Processed)
+                </ScriptBlock>
+              </ListItem>
+            </ListItems>
+          </ListEntry>
+        </ListEntries>
+      </ListControl>
+    </View>
+    <View>
       <Name>PSADTree.Style.Palette</Name>
       <ViewSelectedBy>
         <TypeName>PSADTree.Style.Palette</TypeName>
@@ -197,6 +223,18 @@
                 <ScriptBlock>
                   [PSADTree.Style.TreeStyle]::EscapeSequence($_.Reset)
                 </ScriptBlock>
+              </ListItem>
+              <ListItem>
+                <Label>Computer</Label>
+                <PropertyName>Computer</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>Group</Label>
+                <PropertyName>Group</PropertyName>
+              </ListItem>
+              <ListItem>
+                <Label>User</Label>
+                <PropertyName>User</PropertyName>
               </ListItem>
               <ListItem>
                 <Label>Palette</Label>

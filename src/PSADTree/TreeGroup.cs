@@ -63,8 +63,7 @@ public sealed class TreeGroup : TreeObjectBase
     {
         if (IsCircular = IsCircularNested())
         {
-            TreeStyle treeStyle = TreeStyle.Instance;
-            Hierarchy = $"{Hierarchy} {treeStyle.RenderingSet.Arrows} {treeStyle.Palette.Foreground.BrightRed}Circular Reference{treeStyle.Reset}";
+            Hierarchy = $"{Hierarchy} {TreeStyle.Instance.Group.GetColoredCircular()}";
         }
 
         return IsCircular;
@@ -72,8 +71,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void SetProcessed()
     {
-        TreeStyle treeStyle = TreeStyle.Instance;
-        Hierarchy = $"{Hierarchy} {treeStyle.RenderingSet.Arrows} {treeStyle.Palette.Foreground.BrightYellow}Processed Group{treeStyle.Reset}";
+        Hierarchy = $"{Hierarchy} {TreeStyle.Instance.Group.GetColoredProcessed()}";
     }
 
     internal void LinkCachedChildren(TreeCache cache)

@@ -28,6 +28,9 @@ public sealed class TreeStyle
         }
     } = RenderingStyle.Fancy;
     public string Reset { get; } = "\x1B[0m";
+    public ComputerStyle Computer { get; } = new();
+    public GroupStyle Group { get; } = new();
+    public UserStyle User { get; } = new();
     public Palette Palette { get; } = new();
 
     internal RenderingSet RenderingSet { get; private set; } = RenderingSet.Fancy;
@@ -91,10 +94,7 @@ public sealed class TreeStyle
         return builder.ToString();
     }
 
-    private static string EscapeSequence(string vt, int padding) =>
-        $"{vt}{vt.Replace("\x1B", "`e").PadRight(padding)}\x1B[0m";
-
-    private static string ThrowIfInvalidSequence(string vt)
+    internal static string ThrowIfInvalidSequence(string vt)
     {
         if (!s_validate.IsMatch(vt))
         {
@@ -103,4 +103,7 @@ public sealed class TreeStyle
 
         return vt;
     }
+
+    private static string EscapeSequence(string vt, int padding) =>
+        $"{vt}{vt.Replace("\x1B", "`e").PadRight(padding)}\x1B[0m";
 }

@@ -23,6 +23,23 @@ internal static class TreeExtensions
     [ThreadStatic]
     private static StringBuilder? s_sb;
 #endif
+
+    internal static string GetColoredName(this TreeObjectBase treeObject) => treeObject switch
+    {
+        TreeComputer computer => TreeStyle.Instance.Computer.GetColoredName(computer),
+        TreeGroup group => TreeStyle.Instance.Group.GetColoredName(group),
+        TreeUser user => TreeStyle.Instance.User.GetColoredName(user),
+        _ => throw new NotSupportedException(nameof(TreeObjectBase))
+    };
+
+    internal static string GetColoredName(this Principal principal) => principal switch
+    {
+        ComputerPrincipal computer => TreeStyle.Instance.Computer.GetColoredName(computer),
+        GroupPrincipal group => TreeStyle.Instance.Group.GetColoredName(group),
+        UserPrincipal user => TreeStyle.Instance.User.GetColoredName(user),
+        _ => throw new NotSupportedException(nameof(Principal))
+    };
+
     internal static string Indent(this string inputString, int indentation)
     {
         string corner = TreeStyle.Instance.RenderingSet.Corner;

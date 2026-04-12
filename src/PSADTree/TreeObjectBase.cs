@@ -50,7 +50,7 @@ public abstract class TreeObjectBase
         DistinguishedName = treeObject.DistinguishedName;
         ObjectGuid = treeObject.ObjectGuid;
         ObjectSid = treeObject.ObjectSid;
-        Hierarchy = treeObject.SamAccountName.Indent(depth);
+        Hierarchy = treeObject.GetColoredName().Indent(depth);
         Parent = parent;
         UserPrincipalName = treeObject.UserPrincipalName;
         Description = treeObject.Description;
@@ -67,7 +67,7 @@ public abstract class TreeObjectBase
         DistinguishedName = principal.DistinguishedName;
         ObjectGuid = principal.Guid;
         ObjectSid = principal.Sid;
-        Hierarchy = SamAccountName;
+        Hierarchy = principal.GetColoredName();
         UserPrincipalName = principal.UserPrincipalName;
         Description = principal.Description;
         DisplayName = principal.DisplayName;
@@ -83,7 +83,7 @@ public abstract class TreeObjectBase
         : this(source, principal, properties)
     {
         Depth = depth;
-        Hierarchy = principal.SamAccountName.Indent(depth);
+        Hierarchy = principal.GetColoredName().Indent(depth);
         Parent = parent;
     }
 
