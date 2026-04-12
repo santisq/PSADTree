@@ -10,21 +10,27 @@ public sealed class TreeStyle
 {
     public static TreeStyle Instance { get => s_instance ??= new(); }
     public OutputRendering OutputRendering { get; set; } = OutputRendering.Host;
-    public RenderingStyle RenderingStyle { get; set; } = RenderingStyle.Fancy;
+    public RenderingStyle RenderingStyle
+    {
+        get;
+        set
+        {
+            RenderingSet = value switch
+            {
+                RenderingStyle.Fancy => RenderingSet.Fancy,
+                RenderingStyle.FancyRounded => RenderingSet.FancyRounded,
+                RenderingStyle.Classic => RenderingSet.Classic,
+                RenderingStyle.ClassicRounded => RenderingSet.ClassicRounded,
+                _ => throw new ArgumentOutOfRangeException(nameof(RenderingStyle))
+            };
+
+            field = value;
+        }
+    } = RenderingStyle.Fancy;
     public string Reset { get; } = "\x1B[0m";
     public Palette Palette { get; } = new();
 
-    internal RenderingSet RenderingSet
-    {
-        get => RenderingStyle switch
-        {
-            RenderingStyle.Fancy => RenderingSet.Fancy,
-            RenderingStyle.FancyRounded => RenderingSet.FancyRounded,
-            RenderingStyle.Classic => RenderingSet.Classic,
-            RenderingStyle.ClassicRounded => RenderingSet.ClassicRounded,
-            _ => throw new ArgumentOutOfRangeException(nameof(RenderingStyle))
-        };
-    }
+    internal RenderingSet RenderingSet { get; private set; } = RenderingSet.Fancy;
 
     private static TreeStyle? s_instance;
     private static readonly Regex s_validate = new(
