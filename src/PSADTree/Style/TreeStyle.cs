@@ -28,9 +28,7 @@ public sealed class TreeStyle
         }
     } = RenderingStyle.Fancy;
     public string Reset { get; } = "\x1B[0m";
-    public ComputerStyle Computer { get; } = new();
-    public GroupStyle Group { get; } = new();
-    public UserStyle User { get; } = new();
+    public LeafStyle Leaf { get; } = new();
     public Palette Palette { get; } = new();
 
     internal RenderingSet RenderingSet { get; private set; } = RenderingSet.Fancy;

@@ -43,9 +43,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>PSADTree.Style.GroupStyle</Name>
+      <Name>PSADTree.Style.LeafStyle</Name>
       <ViewSelectedBy>
-        <TypeName>PSADTree.Style.GroupStyle</TypeName>
+        <TypeName>PSADTree.Style.LeafStyle</TypeName>
       </ViewSelectedBy>
       <ListControl>
         <ListEntries>
