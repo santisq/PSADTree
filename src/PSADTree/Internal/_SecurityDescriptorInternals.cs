@@ -14,37 +14,42 @@ namespace PSADTree.Internal;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class _SecurityDescriptorInternals
 {
-    private readonly static Type _target = typeof(NTAccount);
-    private static readonly MethodInfo _getOwner;
-    private static readonly MethodInfo _getGroup;
-    private static readonly MethodInfo _getSddlForm;
-    private static readonly MethodInfo _getAccessRules;
-    private static readonly MethodInfo _getAccessToString;
+    private readonly static Type s_target = typeof(NTAccount);
+    private static readonly MethodInfo s_getOwner;
+    private static readonly MethodInfo s_getGroup;
+    private static readonly MethodInfo s_getSddlForm;
+    private static readonly MethodInfo s_getAccessRules;
+    private static readonly MethodInfo s_getAccessToString;
 
     static _SecurityDescriptorInternals()
     {
         Type type = typeof(_SecurityDescriptorInternals);
-        _getOwner = type.GetMethod(nameof(GetOwner))!;
-        _getGroup = type.GetMethod(nameof(GetGroup))!;
-        _getSddlForm = type.GetMethod(nameof(GetSddlForm))!;
-        _getAccessRules = type.GetMethod(nameof(GetAccessRules))!;
-        _getAccessToString = type.GetMethod(nameof(GetAccessToString))!;
+        s_getOwner = GetMethod(type, nameof(GetOwner));
+        s_getGroup = GetMethod(type, nameof(GetGroup));
+        s_getSddlForm = GetMethod(type, nameof(GetSddlForm));
+        s_getAccessRules = GetMethod(type, nameof(GetAccessRules));
+        s_getAccessToString = GetMethod(type, nameof(GetAccessToString));
     }
+
+    private static MethodInfo GetMethod(Type type, string name) =>
+        type.GetMethod(name)
+            ?? throw new InvalidOperationException(
+                $"Method '{name}' not found on type '{type.FullName}'.");
 
     private static ActiveDirectorySecurity GetBaseObject(PSObject target)
         => (ActiveDirectorySecurity)target.BaseObject;
 
     public static IdentityReference? GetOwner(PSObject target)
-        => GetBaseObject(target).GetOwner(_target);
+        => GetBaseObject(target).GetOwner(s_target);
 
     public static IdentityReference? GetGroup(PSObject target)
-        => GetBaseObject(target).GetGroup(_target);
+        => GetBaseObject(target).GetGroup(s_target);
 
     public static string GetSddlForm(PSObject target)
         => GetBaseObject(target).GetSecurityDescriptorSddlForm(AccessControlSections.All);
 
     public static AuthorizationRuleCollection GetAccessRules(PSObject target)
-        => GetBaseObject(target).GetAccessRules(true, true, _target);
+        => GetBaseObject(target).GetAccessRules(true, true, s_target);
 
     public static string GetAccessToString(PSObject target)
     {
@@ -56,13 +61,14 @@ public static class _SecurityDescriptorInternals
     }
 
     internal static PSObject GetSecurityDescriptorAsPSObject(this DirectoryEntry entry)
-        => PSObject.AsPSObject(entry.ObjectSecurity)
-                .AddProperty("Path", entry.Path)
-                .AddCodeProperty("Owner", _getOwner)
-                .AddCodeProperty("Group", _getGroup)
-                .AddCodeProperty("Sddl", _getSddlForm)
-                .AddCodeProperty("Access", _getAccessRules)
-                .AddCodeProperty("AccessToString", _getAccessToString);
+        => PSObject
+            .AsPSObject(entry.ObjectSecurity)
+            .AddProperty("Path", entry.Path)
+            .AddCodeProperty("Owner", s_getOwner)
+            .AddCodeProperty("Group", s_getGroup)
+            .AddCodeProperty("Sddl", s_getSddlForm)
+            .AddCodeProperty("Access", s_getAccessRules)
+            .AddCodeProperty("AccessToString", s_getAccessToString);
 
     private static PSObject AddProperty(
         this PSObject psObject,

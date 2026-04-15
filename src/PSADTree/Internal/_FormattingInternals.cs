@@ -9,7 +9,7 @@ namespace PSADTree.Internal;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class _FormattingInternals
 {
-    private static Regex s_getDomain = new(
+    private static readonly Regex s_getDomain = new(
         @"^DC=|(?<!\\),.+",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
