@@ -5,6 +5,7 @@ using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
 using PSADTree.Extensions;
+using PSADTree.Style;
 
 namespace PSADTree;
 
@@ -87,6 +88,8 @@ public abstract class PSADTreeCmdletBase : PSCmdlet, IDisposable
     {
         try
         {
+            TreeStyle.Instance.SupportsVirtualTerminal = Host.UI.SupportsVirtualTerminal;
+
             if (Recursive.IsPresent)
             {
                 Depth = int.MaxValue;

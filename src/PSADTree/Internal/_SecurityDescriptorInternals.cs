@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.DirectoryServices;
+using System.Globalization;
 using System.Management.Automation;
 using System.Reflection;
 using System.Security.AccessControl;
@@ -14,22 +15,13 @@ namespace PSADTree.Internal;
 [EditorBrowsable(EditorBrowsableState.Never)]
 public static class _SecurityDescriptorInternals
 {
-    private readonly static Type s_target = typeof(NTAccount);
-    private static readonly MethodInfo s_getOwner;
-    private static readonly MethodInfo s_getGroup;
-    private static readonly MethodInfo s_getSddlForm;
-    private static readonly MethodInfo s_getAccessRules;
-    private static readonly MethodInfo s_getAccessToString;
-
-    static _SecurityDescriptorInternals()
-    {
-        Type type = typeof(_SecurityDescriptorInternals);
-        s_getOwner = GetMethod(type, nameof(GetOwner));
-        s_getGroup = GetMethod(type, nameof(GetGroup));
-        s_getSddlForm = GetMethod(type, nameof(GetSddlForm));
-        s_getAccessRules = GetMethod(type, nameof(GetAccessRules));
-        s_getAccessToString = GetMethod(type, nameof(GetAccessToString));
-    }
+    private static readonly Type s_type = typeof(_SecurityDescriptorInternals);
+    private static readonly Type s_target = typeof(NTAccount);
+    private static readonly MethodInfo s_getOwner = GetMethod(s_type, nameof(GetOwner));
+    private static readonly MethodInfo s_getGroup = GetMethod(s_type, nameof(GetGroup));
+    private static readonly MethodInfo s_getSddlForm = GetMethod(s_type, nameof(GetSddlForm));
+    private static readonly MethodInfo s_getAccessRules = GetMethod(s_type, nameof(GetAccessRules));
+    private static readonly MethodInfo s_getAccessToString = GetMethod(s_type, nameof(GetAccessToString));
 
     private static MethodInfo GetMethod(Type type, string name) =>
         type.GetMethod(name)
@@ -55,7 +47,13 @@ public static class _SecurityDescriptorInternals
     {
         StringBuilder builder = new();
         foreach (ActiveDirectoryAccessRule rule in GetAccessRules(target))
+        {
+#if NET8_0_OR_GREATER
+            builder.AppendLine(CultureInfo.InvariantCulture, $"{rule.IdentityReference} {rule.AccessControlType}");
+#else
             builder.AppendLine($"{rule.IdentityReference} {rule.AccessControlType}");
+#endif
+        }
 
         return builder.ToString();
     }

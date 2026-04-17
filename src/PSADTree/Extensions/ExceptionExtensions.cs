@@ -6,22 +6,34 @@ namespace PSADTree.Extensions;
 
 internal static class ExceptionExtensions
 {
-    internal static ErrorRecord ToIdentityNotFound(this string? identity) =>
-        new(
-            new NoMatchingPrincipalException($"Cannot find an object with identity: '{identity}'."),
-            "IdentityNotFound",
-            ErrorCategory.ObjectNotFound,
-            identity);
+    extension(string? identity)
+    {
+        internal ErrorRecord ToIdentityNotFound() =>
+            new(
+                new NoMatchingPrincipalException($"Cannot find an object with identity: '{identity}'."),
+                "IdentityNotFound",
+                ErrorCategory.ObjectNotFound,
+                identity);
+    }
 
-    internal static ErrorRecord ToAmbiguousIdentity(this Exception exception, string? identity) =>
-        new(exception, "AmbiguousIdentity", ErrorCategory.InvalidResult, identity);
+    extension(Exception exception)
+    {
+        internal ErrorRecord ToAmbiguousIdentity(string? identity) =>
+            new(exception, "AmbiguousIdentity", ErrorCategory.InvalidResult, identity);
 
-    internal static ErrorRecord ToUnspecified(this Exception exception, string? identity) =>
-        new(exception, "Unspecified", ErrorCategory.NotSpecified, identity);
+        internal ErrorRecord ToUnspecified(string? identity) =>
+            new(exception, "Unspecified", ErrorCategory.NotSpecified, identity);
 
-    internal static ErrorRecord ToEnumerationFailure(this Exception exception, Principal? principal) =>
-        new(exception, "EnumerationFailure", ErrorCategory.NotSpecified, principal);
+        internal ErrorRecord ToEnumerationFailure(Principal? principal) =>
+            new(exception, "EnumerationFailure", ErrorCategory.NotSpecified, principal);
 
-    internal static ErrorRecord ToSetPrincipalContext(this Exception exception) =>
-        new(exception, "SetPrincipalContext", ErrorCategory.ConnectionError, null);
+        internal ErrorRecord ToSetPrincipalContext() =>
+            new(exception, "SetPrincipalContext", ErrorCategory.ConnectionError, null);
+    }
+
+    extension(string vt)
+    {
+        internal void ThrowInvalidSequence() => throw new ArgumentException(
+            $"The specified string contains printable content when it should only contain ANSI escape sequences: '{vt}'.");
+    }
 }

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using System.Globalization;
 using System.Linq;
 using PSADTree.Internal;
 
@@ -11,58 +12,74 @@ namespace PSADTree.Extensions;
 
 internal static class MiscExtensions
 {
-    internal static DirectoryEntry GetDirectoryEntry(this Principal principal)
-        => (DirectoryEntry)principal.GetUnderlyingObject();
-
-    internal static ReadOnlyDictionary<string, object?>? GetAdditionalProperties(
-        this Principal principal,
-        string[] properties)
+    extension(Principal principal)
     {
-        if (properties.Length == 0)
-            return null;
+        internal DirectoryEntry GetDirectoryEntry() => (DirectoryEntry)principal.GetUnderlyingObject();
 
-        DirectoryEntry entry = principal.GetDirectoryEntry();
-
-        if (properties.Any(e => e == "*"))
-            return entry.GetAllAttributes();
-
-        Dictionary<string, object?> additionalProperties = new(
-            capacity: properties.Length,
-            StringComparer.OrdinalIgnoreCase);
-
-        foreach (string property in properties)
+        internal ReadOnlyDictionary<string, object?>? GetAdditionalProperties(string[] properties)
         {
-            // already processed
-            if (additionalProperties.ContainsKey(property))
-                continue;
+            if (properties.Length == 0)
+                return null;
 
-            if (!LdapMap.TryGetValue(property, out string? ldapDn))
+            DirectoryEntry entry = principal.GetDirectoryEntry();
+
+            if (properties.Any(e => e == "*"))
+                return GetAllAttributes(entry);
+
+            Dictionary<string, object?> additionalProperties = new(
+                capacity: properties.Length,
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (string property in properties)
             {
-                ldapDn = property;
+                // already processed
+                if (additionalProperties.ContainsKey(property))
+                    continue;
+
+                if (!LdapMap.TryGetValue(property, out string? ldapDn))
+                {
+                    ldapDn = property;
+                }
+
+                if (IsSecurityDescriptor(property))
+                {
+                    additionalProperties[property] = entry.GetSecurityDescriptorAsPSObject();
+                    continue;
+                }
+
+                object? value = entry.Properties[ldapDn]?.Value;
+
+                if (value is null) continue;
+                if (IsIAdsLargeInteger(value, out long? fileTime))
+                {
+                    additionalProperties[property] = fileTime;
+                    continue;
+                }
+
+                additionalProperties[property] = value;
             }
 
-            if (IsSecurityDescriptor(property))
-            {
-                additionalProperties[property] = entry.GetSecurityDescriptorAsPSObject();
-                continue;
-            }
-
-            object? value = entry.Properties[ldapDn]?.Value;
-
-            if (value is null) continue;
-            if (IsIAdsLargeInteger(value, out long? fileTime))
-            {
-                additionalProperties[property] = fileTime;
-                continue;
-            }
-
-            additionalProperties[property] = value;
+            return additionalProperties is { Count: 0 } ? null : new(additionalProperties);
         }
-
-        return additionalProperties is { Count: 0 } ? null : new(additionalProperties);
     }
 
-    private static ReadOnlyDictionary<string, object?> GetAllAttributes(this DirectoryEntry entry)
+    extension(AuthenticablePrincipal principal)
+    {
+        internal UserAccountControl? GetUserAccountControl()
+        {
+            DirectoryEntry entry = principal.GetDirectoryEntry();
+            object? uac = entry.Properties["userAccountControl"]?.Value;
+            if (uac is null) return null;
+            return (UserAccountControl)Convert.ToUInt32(uac, CultureInfo.InvariantCulture);
+        }
+    }
+
+    extension(UserAccountControl uac)
+    {
+        internal bool IsEnabled() => !uac.HasFlag(UserAccountControl.ACCOUNTDISABLE);
+    }
+
+    private static ReadOnlyDictionary<string, object?> GetAllAttributes(DirectoryEntry entry)
     {
         Dictionary<string, object?> additionalProperties = new(
             capacity: entry.Properties.Count,
@@ -79,6 +96,7 @@ internal static class MiscExtensions
             object? value = entry.Properties[property]?.Value;
 
             if (value is null) continue;
+
             if (IsIAdsLargeInteger(value, out long? fileTime))
             {
                 additionalProperties[property] = fileTime;
@@ -96,8 +114,7 @@ internal static class MiscExtensions
         [NotNullWhen(true)] out long? fileTime)
     {
         fileTime = default;
-        if (value is not IAdsLargeInteger largeInt)
-            return false;
+        if (value is not IAdsLargeInteger largeInt) return false;
 
         fileTime = (largeInt.HighPart << 32) + largeInt.LowPart;
         return true;
@@ -105,15 +122,4 @@ internal static class MiscExtensions
 
     private static bool IsSecurityDescriptor(string ldapDn)
         => ldapDn.Equals("nTSecurityDescriptor", StringComparison.OrdinalIgnoreCase);
-
-    internal static UserAccountControl? GetUserAccountControl(this AuthenticablePrincipal principal)
-    {
-        DirectoryEntry entry = principal.GetDirectoryEntry();
-        object? uac = entry.Properties["userAccountControl"]?.Value;
-        if (uac is null) return null;
-        return (UserAccountControl)Convert.ToUInt32(uac);
-    }
-
-    internal static bool IsEnabled(this UserAccountControl uac)
-        => !uac.HasFlag(UserAccountControl.ACCOUNTDISABLE);
 }

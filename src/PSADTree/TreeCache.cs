@@ -11,7 +11,7 @@ internal sealed class TreeCache
 
     internal bool TryAdd(TreeGroup group)
     {
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
         return _cache.TryAdd(group.DistinguishedName, group);
 #else
         if (_cache.ContainsKey(group.DistinguishedName))

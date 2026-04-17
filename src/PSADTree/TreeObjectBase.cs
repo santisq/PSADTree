@@ -3,14 +3,15 @@ using System.Collections.ObjectModel;
 using System.DirectoryServices.AccountManagement;
 using System.Security.Principal;
 using PSADTree.Extensions;
+using PSADTree.Style;
 
 namespace PSADTree;
 
 public abstract class TreeObjectBase
 {
-    public int Depth { get; }
+    private static TreeStyle TreeStyle { get => TreeStyle.Instance; }
 
-    internal string Source { get; }
+    public int Depth { get; }
 
     public TreeGroup? Parent { get; }
 
@@ -36,6 +37,8 @@ public abstract class TreeObjectBase
 
     public ReadOnlyDictionary<string, object?>? AdditionalProperties { get; }
 
+    internal string Source { get; }
+
     protected TreeObjectBase(
         TreeObjectBase treeObject,
         TreeGroup? parent,
@@ -50,7 +53,7 @@ public abstract class TreeObjectBase
         DistinguishedName = treeObject.DistinguishedName;
         ObjectGuid = treeObject.ObjectGuid;
         ObjectSid = treeObject.ObjectSid;
-        Hierarchy = treeObject.SamAccountName.Indent(depth);
+        Hierarchy = TreeStyle.Principal.GetColoredName(treeObject).Indent(depth);
         Parent = parent;
         UserPrincipalName = treeObject.UserPrincipalName;
         Description = treeObject.Description;
@@ -67,7 +70,7 @@ public abstract class TreeObjectBase
         DistinguishedName = principal.DistinguishedName;
         ObjectGuid = principal.Guid;
         ObjectSid = principal.Sid;
-        Hierarchy = SamAccountName;
+        Hierarchy = TreeStyle.Principal.GetColoredName(principal);
         UserPrincipalName = principal.UserPrincipalName;
         Description = principal.Description;
         DisplayName = principal.DisplayName;
@@ -83,7 +86,7 @@ public abstract class TreeObjectBase
         : this(source, principal, properties)
     {
         Depth = depth;
-        Hierarchy = principal.SamAccountName.Indent(depth);
+        Hierarchy = TreeStyle.Principal.GetColoredName(principal).Indent(depth);
         Parent = parent;
     }
 
