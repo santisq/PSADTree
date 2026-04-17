@@ -20,9 +20,10 @@ Get-ADTreeStyle
 
 ## DESCRIPTION
 
-The `Get-ADTreeStyle` cmdlet provides access to the `TreeStyle` instance that controls the rendering and customization of output for the `Get-ADTreeGroupMember` and `Get-ADTreePrincipalGroupMembership` cmdlets.
+The `Get-ADTreeStyle` cmdlet provides access to the `TreeStyle` instance that controls the rendering and customization
+of output for the `Get-ADTreeGroupMember` and `Get-ADTreePrincipalGroupMembership` cmdlets.
 
-For details, see [__about_TreeStyle__](./about_TreeStyle.md).
+To Customize output rendering, see [about_TreeStyle](about_TreeStyle.md).
 
 ## EXAMPLES
 
@@ -47,3 +48,16 @@ This cmdlet supports the common parameters. For more information, see [about_Com
 ## OUTPUTS
 
 ### TreeStyle
+
+## NOTES
+
+Modifying the properties of this object (such as colors for groups, users, computers, etc.) will immediately affect the
+visual output of `Get-ADTreeGroupMember` and `Get-ADTreePrincipalGroupMembership` in the current PowerShell session.
+
+## RELATED LINKS
+
+[__`Get-ADTreeGroupMember`__](Get-ADTreeGroupMember.md)
+
+[__`Get-ADTreePrincipalGroupMembership`__](Get-ADTreePrincipalGroupMembership.md)
+
+[__about_TreeStyle__](about_TreeStyle.md)

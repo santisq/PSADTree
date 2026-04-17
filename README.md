@@ -10,18 +10,25 @@
 
 </div>
 
-PSADTree is a PowerShell module that brings `tree`-like visualization to Active Directory group structures — perfect for spotting nested membership and circular references at a glance.
+PSADTree is a PowerShell module that brings intuitive `tree`-like visualization to Active Directory group structures. It helps administrators and security professionals quickly understand nested group memberships, identify effective permissions, and spot potential circular references at a glance.
 
-This Module currently includes two cmdlets:
+## Cmdlets
 
-- [Get-ADTreeGroupMember](docs/en-US/Get-ADTreeGroupMember.md) for AD Group Members.
-- [Get-ADTreePrincipalGroupMembership](docs/en-US/Get-ADTreePrincipalGroupMembership.md) for AD Principal Group Membership.
+- **`Get-ADTreeGroupMember`**  
+Displays the members of an Active Directory group in a clear hierarchical tree view. It recursively shows nested groups, users, computers, and other principals, making it easy to visualize complex group nesting.
 
-__Both cmdlets help with discovery of Circular Nested Groups.__
+- **`Get-ADTreePrincipalGroupMembership`**  
+Shows all groups that a given Active Directory principal (user, computer, group, etc.) belongs to, presented in a tree structure. This reverse view is especially useful for understanding effective membership and troubleshooting access issues.
+
+- **`Get-ADTreeStyle`**  
+Retrieves the singleton `TreeStyle` instance used to customize the colored, hierarchical output of `Get-ADTreeGroupMember` and `Get-ADTreePrincipalGroupMembership`.  
+Allows you to change colors for groups, users, computers, other principals, and apply accents. You can also control ANSI output rendering.
 
 ## Documentation
 
-Check out [__the docs__](./docs/en-US/PSADTree.md) for information about how to use this Module.
+- Learn how to use the cmdlets in the [official documentation](./docs/en-US/).
+
+- To Customize output rendering, see [about_TreeStyle](./docs/en-US/about_TreeStyle.md).
 
 ## Installation
 
@@ -170,7 +177,7 @@ mail                       john.doe@mylab.com
 
 >[!TIP]
 >
-> - `-Properties *` retrieves __all__ available attributes from each object.
+> - `-Properties *` retrieves **all** available attributes from each object.
 > - Use friendly names (e.g. `Country` → `c`, `City` → `l`, `PasswordLastSet` → `pwdLastSet`) or raw LDAP names — the key in `.AdditionalProperties` matches what you requested.
 > - See the full list of supported friendly names in the [source code `LdapMap.cs`](https://github.com/santisq/PSADTree/tree/main/src/PSADTree/LdapMap.cs)
 
@@ -274,4 +281,4 @@ ChildDomain          group     └── Users
 
 ## Contributing
 
-Contributions are more than welcome, if you wish to contribute, fork this repository and submit a pull request with the changes.
+Contributions are welcome, if you wish to contribute, fork this repository and submit a pull request with the changes.
