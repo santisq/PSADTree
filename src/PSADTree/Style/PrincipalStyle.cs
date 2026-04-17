@@ -41,7 +41,8 @@ public sealed class PrincipalStyle
 
     internal string GetColoredName(TreeObjectBase treeObject)
     {
-        if (TreeStyle.OutputRendering == OutputRendering.PlainText)
+        if (TreeStyle.OutputRendering == OutputRendering.PlainText ||
+            (TreeStyle.OutputRendering == OutputRendering.Host && !TreeStyle.SupportsVirtualTerminal))
         {
             return treeObject.SamAccountName;
         }
@@ -57,7 +58,8 @@ public sealed class PrincipalStyle
 
     internal string GetColoredName(Principal principal)
     {
-        if (TreeStyle.OutputRendering == OutputRendering.PlainText)
+        if (TreeStyle.OutputRendering == OutputRendering.PlainText ||
+            (TreeStyle.OutputRendering == OutputRendering.Host && !TreeStyle.SupportsVirtualTerminal))
         {
             return principal.SamAccountName;
         }
@@ -73,7 +75,8 @@ public sealed class PrincipalStyle
 
     internal string GetColoredCircular()
     {
-        if (TreeStyle.OutputRendering == OutputRendering.PlainText)
+        if (TreeStyle.OutputRendering == OutputRendering.PlainText ||
+            (TreeStyle.OutputRendering == OutputRendering.Host && !TreeStyle.SupportsVirtualTerminal))
         {
             return $"{TreeStyle.RenderingSet.Arrows} Circular Reference";
         }
@@ -83,7 +86,8 @@ public sealed class PrincipalStyle
 
     internal string GetColoredProcessed()
     {
-        if (TreeStyle.OutputRendering == OutputRendering.PlainText)
+        if (TreeStyle.OutputRendering == OutputRendering.PlainText ||
+            (TreeStyle.OutputRendering == OutputRendering.Host && !TreeStyle.SupportsVirtualTerminal))
         {
             return $"{TreeStyle.RenderingSet.Arrows} Processed Group";
         }

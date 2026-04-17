@@ -44,6 +44,8 @@ public sealed class TreeStyle
 
     internal RenderingSet RenderingSet { get; private set; } = RenderingSet.Fancy;
 
+    internal bool SupportsVirtualTerminal { get; set; } = true;
+
     internal TreeStyle()
     { }
 
