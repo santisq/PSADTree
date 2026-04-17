@@ -69,7 +69,7 @@ public sealed class TreeStyle
     }
 
     public string EscapeSequence(string vt) =>
-        $"{vt}{vt.Replace("\x1B", "`e")}\x1B[0m";
+        $"{vt}{vt.Replace("\x1B", "`e", StringComparison.Ordinal)}\x1B[0m";
 
     public void ResetSettings() =>
         s_instance = new();
@@ -111,5 +111,5 @@ public sealed class TreeStyle
     }
 
     private static string EscapeSequence(string vt, int padding) =>
-        $"{vt}{vt.Replace("\x1B", "`e").PadRight(padding)}\x1B[0m";
+        $"{vt}{vt.Replace("\x1B", "`e", StringComparison.Ordinal).PadRight(padding)}\x1B[0m";
 }

@@ -7,13 +7,13 @@ namespace PSADTree;
 
 public sealed class TreeGroup : TreeObjectBase
 {
+    private static TreeStyle TreeStyle { get => TreeStyle.Instance; }
+
     private List<TreeObjectBase> _children;
 
     public ReadOnlyCollection<TreeObjectBase> Children => new(_children);
 
     public bool IsCircular { get; private set; }
-
-    private TreeStyle TreeStyle { get => TreeStyle.Instance; }
 
     private TreeGroup(
         TreeGroup group,

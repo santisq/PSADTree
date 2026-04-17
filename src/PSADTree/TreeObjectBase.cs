@@ -9,6 +9,8 @@ namespace PSADTree;
 
 public abstract class TreeObjectBase
 {
+    private static TreeStyle TreeStyle { get => TreeStyle.Instance; }
+
     public int Depth { get; }
 
     public TreeGroup? Parent { get; }
@@ -36,8 +38,6 @@ public abstract class TreeObjectBase
     public ReadOnlyDictionary<string, object?>? AdditionalProperties { get; }
 
     internal string Source { get; }
-
-    private TreeStyle TreeStyle { get => TreeStyle.Instance; }
 
     protected TreeObjectBase(
         TreeObjectBase treeObject,

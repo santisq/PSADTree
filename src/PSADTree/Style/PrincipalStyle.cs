@@ -4,6 +4,8 @@ namespace PSADTree.Style;
 
 public sealed class PrincipalStyle
 {
+    private static TreeStyle TreeStyle { get => TreeStyle.Instance; }
+
     public string Circular
     {
         get;
@@ -33,8 +35,6 @@ public sealed class PrincipalStyle
         get;
         set => field = TreeStyle.ThrowIfInvalidSequence(value);
     } = string.Empty;
-
-    private TreeStyle TreeStyle { get => TreeStyle.Instance; }
 
     internal PrincipalStyle()
     { }

@@ -108,7 +108,7 @@ internal static partial class TreeExtensions
             {
                 TreeObjectBase current = tree[i];
 
-                if ((index = current.Hierarchy.IndexOf(set.UpRight)) == -1)
+                if ((index = current.Hierarchy.IndexOf(set.UpRight, StringComparison.Ordinal)) == -1)
                 {
                     continue;
                 }

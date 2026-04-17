@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
+using System.Globalization;
 using System.Linq;
 using PSADTree.Internal;
 
@@ -69,7 +70,7 @@ internal static class MiscExtensions
             DirectoryEntry entry = principal.GetDirectoryEntry();
             object? uac = entry.Properties["userAccountControl"]?.Value;
             if (uac is null) return null;
-            return (UserAccountControl)Convert.ToUInt32(uac);
+            return (UserAccountControl)Convert.ToUInt32(uac, CultureInfo.InvariantCulture);
         }
     }
 
