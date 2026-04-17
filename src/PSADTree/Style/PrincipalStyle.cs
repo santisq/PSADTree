@@ -34,7 +34,6 @@ public sealed class PrincipalStyle
         set => field = TreeStyle.ThrowIfInvalidSequence(value);
     } = string.Empty;
 
-
     private TreeStyle TreeStyle { get => TreeStyle.Instance; }
 
     internal PrincipalStyle()
@@ -47,7 +46,13 @@ public sealed class PrincipalStyle
             return treeObject.SamAccountName;
         }
 
-        return $"{treeObject.SamAccountName}";
+        return treeObject switch
+        {
+            TreeComputer treeComputer => $"{Computer}{treeComputer.SamAccountName}{TreeStyle.Reset}",
+            TreeGroup treeGroup => $"{Group}{treeGroup.SamAccountName}{TreeStyle.Reset}",
+            TreeUser treeUser => $"{User}{treeUser.SamAccountName}{TreeStyle.Reset}",
+            _ => treeObject.SamAccountName
+        };
     }
 
     internal string GetColoredName(Principal principal)
@@ -57,7 +62,13 @@ public sealed class PrincipalStyle
             return principal.SamAccountName;
         }
 
-        return $"{principal.SamAccountName}";
+        return principal switch
+        {
+            ComputerPrincipal computerPrincipal => $"{Computer}{computerPrincipal.SamAccountName}{TreeStyle.Reset}",
+            GroupPrincipal groupPrincipal => $"{Group}{groupPrincipal.SamAccountName}{TreeStyle.Reset}",
+            UserPrincipal userPrincipal => $"{User}{userPrincipal.SamAccountName}{TreeStyle.Reset}",
+            _ => principal.SamAccountName
+        };
     }
 
     internal string GetColoredCircular()
