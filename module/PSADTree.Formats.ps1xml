@@ -54,31 +54,31 @@
               <ListItem>
                 <Label>Circular</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Circular)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Circular)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Processed</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Processed)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Processed)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Computer</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Computer)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Computer)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Group</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Group)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Group)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>User</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.User)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.User)
                 </ScriptBlock>
               </ListItem>
             </ListItems>
@@ -121,97 +121,97 @@
               <ListItem>
                 <Label>Black</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Black)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Black)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightBlack</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightBlack)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightBlack)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>White</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.White)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.White)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightWhite</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightWhite)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightWhite)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Red</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Red)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Red)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightRed</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightRed)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightRed)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Magenta</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Magenta)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Magenta)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightMagenta</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightMagenta)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightMagenta)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Blue</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Blue)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Blue)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightBlue</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightBlue)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightBlue)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Cyan</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Cyan)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Cyan)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightCyan</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightCyan)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightCyan)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Green</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Green)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Green)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightGreen</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightGreen)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightGreen)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>Yellow</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Yellow)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Yellow)
                 </ScriptBlock>
               </ListItem>
               <ListItem>
                 <Label>BrightYellow</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.BrightYellow)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.BrightYellow)
                 </ScriptBlock>
               </ListItem>
             </ListItems>
@@ -239,7 +239,7 @@
               <ListItem>
                 <Label>Reset</Label>
                 <ScriptBlock>
-                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Reset)
+                  [PSADTree.Style.TreeStyle]::Instance.EscapeSequence($_.Reset)
                 </ScriptBlock>
               </ListItem>
               <ListItem>

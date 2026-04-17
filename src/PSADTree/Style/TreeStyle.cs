@@ -49,29 +49,29 @@ public sealed class TreeStyle
     internal TreeStyle()
     { }
 
-    public static string CombineSequence(string left, string right)
+    public string CombineSequence(string left, string right)
     {
         ThrowIfInvalidSequence(left);
         ThrowIfInvalidSequence(right);
         return $"{left.TrimEnd('m')};{right.Substring(2)}";
     }
 
-    public static string ToItalic(string vt)
+    public string ToItalic(string vt)
     {
         ThrowIfInvalidSequence(vt);
         return $"{vt.TrimEnd('m')};3m";
     }
 
-    public static string ToBold(string vt)
+    public string ToBold(string vt)
     {
         ThrowIfInvalidSequence(vt);
         return $"{vt.TrimEnd('m')};1m";
     }
 
-    public static string EscapeSequence(string vt) =>
+    public string EscapeSequence(string vt) =>
         $"{vt}{vt.Replace("\x1B", "`e")}\x1B[0m";
 
-    public static void ResetSettings() =>
+    public void ResetSettings() =>
         s_instance = new();
 
     internal static string FormatType(object instance)
