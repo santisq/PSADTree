@@ -13,6 +13,8 @@ public sealed class TreeGroup : TreeObjectBase
 
     public bool IsCircular { get; private set; }
 
+    private TreeStyle TreeStyle { get => TreeStyle.Instance; }
+
     private TreeGroup(
         TreeGroup group,
         TreeGroup parent,
@@ -63,7 +65,7 @@ public sealed class TreeGroup : TreeObjectBase
     {
         if (IsCircular = IsCircularNested())
         {
-            Hierarchy = $"{Hierarchy} {TreeStyle.Instance.Leaf.GetColoredCircular()}";
+            Hierarchy = $"{Hierarchy} {TreeStyle.Principal.GetColoredCircular()}";
         }
 
         return IsCircular;
@@ -71,7 +73,7 @@ public sealed class TreeGroup : TreeObjectBase
 
     internal void SetProcessed()
     {
-        Hierarchy = $"{Hierarchy} {TreeStyle.Instance.Leaf.GetColoredProcessed()}";
+        Hierarchy = $"{Hierarchy} {TreeStyle.Principal.GetColoredProcessed()}";
     }
 
     internal void LinkCachedChildren(TreeCache cache)

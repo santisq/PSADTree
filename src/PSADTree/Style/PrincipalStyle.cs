@@ -2,22 +2,42 @@ using System.DirectoryServices.AccountManagement;
 
 namespace PSADTree.Style;
 
-public sealed class LeafStyle
+public sealed class PrincipalStyle
 {
     public string Circular
     {
         get;
         set => field = TreeStyle.ThrowIfInvalidSequence(value);
     } = "\x1B[91m";
+
     public string Processed
     {
         get;
         set => field = TreeStyle.ThrowIfInvalidSequence(value);
     } = "\x1B[93m";
 
+    public string Computer
+    {
+        get;
+        set => TreeStyle.ThrowIfInvalidSequence(value);
+    } = string.Empty;
+
+    public string Group
+    {
+        get;
+        set => field = TreeStyle.ThrowIfInvalidSequence(value);
+    } = string.Empty;
+
+    public string User
+    {
+        get;
+        set => field = TreeStyle.ThrowIfInvalidSequence(value);
+    } = string.Empty;
+
+
     private TreeStyle TreeStyle { get => TreeStyle.Instance; }
 
-    internal LeafStyle()
+    internal PrincipalStyle()
     { }
 
     internal string GetColoredName(TreeObjectBase treeObject)

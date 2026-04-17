@@ -11,8 +11,6 @@ public abstract class TreeObjectBase
 {
     public int Depth { get; }
 
-    internal string Source { get; }
-
     public TreeGroup? Parent { get; }
 
     public string Domain { get; }
@@ -37,6 +35,10 @@ public abstract class TreeObjectBase
 
     public ReadOnlyDictionary<string, object?>? AdditionalProperties { get; }
 
+    internal string Source { get; }
+
+    private TreeStyle TreeStyle { get => TreeStyle.Instance; }
+
     protected TreeObjectBase(
         TreeObjectBase treeObject,
         TreeGroup? parent,
@@ -51,7 +53,7 @@ public abstract class TreeObjectBase
         DistinguishedName = treeObject.DistinguishedName;
         ObjectGuid = treeObject.ObjectGuid;
         ObjectSid = treeObject.ObjectSid;
-        Hierarchy = TreeStyle.Instance.Leaf.GetColoredName(treeObject).Indent(depth);
+        Hierarchy = TreeStyle.Principal.GetColoredName(treeObject).Indent(depth);
         Parent = parent;
         UserPrincipalName = treeObject.UserPrincipalName;
         Description = treeObject.Description;
@@ -68,7 +70,7 @@ public abstract class TreeObjectBase
         DistinguishedName = principal.DistinguishedName;
         ObjectGuid = principal.Guid;
         ObjectSid = principal.Sid;
-        Hierarchy = TreeStyle.Instance.Leaf.GetColoredName(principal);
+        Hierarchy = TreeStyle.Principal.GetColoredName(principal);
         UserPrincipalName = principal.UserPrincipalName;
         Description = principal.Description;
         DisplayName = principal.DisplayName;
@@ -84,7 +86,7 @@ public abstract class TreeObjectBase
         : this(source, principal, properties)
     {
         Depth = depth;
-        Hierarchy = TreeStyle.Instance.Leaf.GetColoredName(principal).Indent(depth);
+        Hierarchy = TreeStyle.Principal.GetColoredName(principal).Indent(depth);
         Parent = parent;
     }
 

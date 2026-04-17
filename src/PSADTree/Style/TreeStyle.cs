@@ -8,8 +8,16 @@ namespace PSADTree.Style;
 
 public sealed class TreeStyle
 {
+    private static TreeStyle? s_instance;
+
+    private static readonly Regex s_validate = new(
+        @"^\x1B\[(?:[0-9]+;?){1,}m$",
+        RegexOptions.Compiled);
+
     public static TreeStyle Instance { get => s_instance ??= new(); }
+
     public OutputRendering OutputRendering { get; set; } = OutputRendering.Host;
+
     public RenderingStyle RenderingStyle
     {
         get;
@@ -27,16 +35,14 @@ public sealed class TreeStyle
             field = value;
         }
     } = RenderingStyle.Fancy;
+
     public string Reset { get; } = "\x1B[0m";
-    public LeafStyle Leaf { get; } = new();
+
+    public PrincipalStyle Principal { get; } = new();
+
     public Palette Palette { get; } = new();
 
     internal RenderingSet RenderingSet { get; private set; } = RenderingSet.Fancy;
-
-    private static TreeStyle? s_instance;
-    private static readonly Regex s_validate = new(
-        @"^\x1B\[(?:[0-9]+;?){1,}m$",
-        RegexOptions.Compiled);
 
     internal TreeStyle()
     { }
