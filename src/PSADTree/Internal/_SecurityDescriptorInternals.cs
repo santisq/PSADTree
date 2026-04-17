@@ -47,7 +47,13 @@ public static class _SecurityDescriptorInternals
     {
         StringBuilder builder = new();
         foreach (ActiveDirectoryAccessRule rule in GetAccessRules(target))
+        {
+#if NET8_0_OR_GREATER
             builder.AppendLine(CultureInfo.InvariantCulture, $"{rule.IdentityReference} {rule.AccessControlType}");
+#else
+            builder.AppendLine($"{rule.IdentityReference} {rule.AccessControlType}");
+#endif
+        }
 
         return builder.ToString();
     }

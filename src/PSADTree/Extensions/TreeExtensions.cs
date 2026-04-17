@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management.Automation;
-#if NETCOREAPP
+#if NET8_0_OR_GREATER
 using System.Runtime.CompilerServices;
 #else
 using System.Text;
@@ -15,7 +15,7 @@ namespace PSADTree.Extensions;
 
 internal static partial class TreeExtensions
 {
-#if NETCOREAPP
+#if NET8_0_OR_GREATER
     [GeneratedRegex("(?<=,)DC=.+$", RegexOptions.Compiled)]
     private static partial Regex GetDefaultNamingContextRegex();
 
@@ -24,23 +24,22 @@ internal static partial class TreeExtensions
     private static readonly Regex s_reDefaultNamingContext = new(
         "(?<=,)DC=.+$",
         RegexOptions.Compiled);
+
+    [ThreadStatic]
+    private static StringBuilder? s_sb;
 #endif
 
     extension(string input)
     {
         internal string GetDefaultNamingContext() => s_reDefaultNamingContext.Match(input).Value;
 
-#if !NETCOREAPP
-        [ThreadStatic]
-        private static StringBuilder? s_sb;
-#endif
         internal string Indent(int indentation)
         {
             string corner = TreeStyle.Instance.RenderingSet.Corner;
             int repeatCount = (4 * indentation) - 4;
             int capacity = repeatCount + 4 + input.Length;
 
-#if NETCOREAPP
+#if NET8_0_OR_GREATER
             return string.Create(
                 capacity, (repeatCount, corner, input),
                 static (buffer, state) =>
@@ -62,7 +61,7 @@ internal static partial class TreeExtensions
 #endif
         }
 
-#if NETCOREAPP
+#if NET8_0_OR_GREATER
         [SkipLocalsInit]
         private string ReplaceAt(int index, char newChar)
             => string.Create(
@@ -108,7 +107,13 @@ internal static partial class TreeExtensions
             {
                 TreeObjectBase current = tree[i];
 
-                if ((index = current.Hierarchy.IndexOf(set.UpRight, StringComparison.Ordinal)) == -1)
+#if NET8_0_OR_GREATER
+                index = current.Hierarchy.IndexOf(set.UpRight, StringComparison.Ordinal);
+#else
+                index = current.Hierarchy.IndexOf(set.UpRight);
+#endif
+
+                if (index == -1)
                 {
                     continue;
                 }

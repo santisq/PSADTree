@@ -68,9 +68,14 @@ public sealed class TreeStyle
         return $"{vt.TrimEnd('m')};1m";
     }
 
-    public string EscapeSequence(string vt) =>
-        $"{vt}{vt.Replace("\x1B", "`e", StringComparison.Ordinal)}\x1B[0m";
-
+    public string EscapeSequence(string vt)
+    {
+#if NET8_0_OR_GREATER
+        return $"{vt}{vt.Replace("\x1B", "`e", StringComparison.Ordinal)}\x1B[0m";
+#else
+        return $"{vt}{vt.Replace("\x1B", "`e")}\x1B[0m";
+#endif
+    }
     public void ResetSettings() =>
         s_instance = new();
 
@@ -110,6 +115,12 @@ public sealed class TreeStyle
         return vt;
     }
 
-    private static string EscapeSequence(string vt, int padding) =>
-        $"{vt}{vt.Replace("\x1B", "`e", StringComparison.Ordinal).PadRight(padding)}\x1B[0m";
+    private static string EscapeSequence(string vt, int padding)
+    {
+#if NET8_0_OR_GREATER
+        return $"{vt}{vt.Replace("\x1B", "`e", StringComparison.Ordinal).PadRight(padding)}\x1B[0m";
+#else
+        return $"{vt}{vt.Replace("\x1B", "`e").PadRight(padding)}\x1B[0m";
+#endif
+    }
 }
