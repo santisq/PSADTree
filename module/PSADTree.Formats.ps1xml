@@ -43,9 +43,9 @@
       </TableControl>
     </View>
     <View>
-      <Name>PSADTree.Style.LeafStyle</Name>
+      <Name>PSADTree.Style.PrincipalStyle</Name>
       <ViewSelectedBy>
-        <TypeName>PSADTree.Style.LeafStyle</TypeName>
+        <TypeName>PSADTree.Style.PrincipalStyle</TypeName>
       </ViewSelectedBy>
       <ListControl>
         <ListEntries>
@@ -61,6 +61,24 @@
                 <Label>Processed</Label>
                 <ScriptBlock>
                   [PSADTree.Style.TreeStyle]::EscapeSequence($_.Processed)
+                </ScriptBlock>
+              </ListItem>
+              <ListItem>
+                <Label>Computer</Label>
+                <ScriptBlock>
+                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Computer)
+                </ScriptBlock>
+              </ListItem>
+              <ListItem>
+                <Label>Group</Label>
+                <ScriptBlock>
+                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.Group)
+                </ScriptBlock>
+              </ListItem>
+              <ListItem>
+                <Label>User</Label>
+                <ScriptBlock>
+                  [PSADTree.Style.TreeStyle]::EscapeSequence($_.User)
                 </ScriptBlock>
               </ListItem>
             </ListItems>
@@ -225,16 +243,8 @@
                 </ScriptBlock>
               </ListItem>
               <ListItem>
-                <Label>Computer</Label>
-                <PropertyName>Computer</PropertyName>
-              </ListItem>
-              <ListItem>
-                <Label>Group</Label>
-                <PropertyName>Group</PropertyName>
-              </ListItem>
-              <ListItem>
-                <Label>User</Label>
-                <PropertyName>User</PropertyName>
+                <Label>Principal</Label>
+                <PropertyName>Principal</PropertyName>
               </ListItem>
               <ListItem>
                 <Label>Palette</Label>
