@@ -20,7 +20,12 @@ internal readonly struct RenderingSet
 
     internal string Arrows { get; }
 
-    private RenderingSet(string corner, char upRight, char vertical, char verticalRight, string arrows)
+    private RenderingSet(
+        string corner,
+        char upRight,
+        char vertical,
+        char verticalRight,
+        string arrows)
     {
         Corner = corner;
         UpRight = upRight;
