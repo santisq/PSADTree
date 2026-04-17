@@ -6,13 +6,20 @@ using PSADTree.Extensions;
 
 namespace PSADTree.Style;
 
-public sealed class TreeStyle
+public sealed partial class TreeStyle
 {
     private static TreeStyle? s_instance;
 
+#if NET8_0_OR_GREATER
+    [GeneratedRegex(@"^\x1B\[(?:[0-9]+;?){1,}m$", RegexOptions.Compiled)]
+    private static partial Regex ValidateRegex();
+
+    private static readonly Regex s_validate = ValidateRegex();
+#else
     private static readonly Regex s_validate = new(
         @"^\x1B\[(?:[0-9]+;?){1,}m$",
         RegexOptions.Compiled);
+#endif
 
     public static TreeStyle Instance { get => s_instance ??= new(); }
 
@@ -76,8 +83,8 @@ public sealed class TreeStyle
         return $"{vt}{vt.Replace("\x1B", "`e")}\x1B[0m";
 #endif
     }
-    public void ResetSettings() =>
-        s_instance = new();
+
+    public void ResetSettings() => s_instance = new();
 
     internal static string FormatType(object instance)
     {
